@@ -67,8 +67,6 @@ const celoSepolia = {
   testnet: true,
 } as const;
 
-// Removed Polkadot Asset Hub and Moonbase Alpha - using Sepolia instead
-
 const chains = [sepolia, baseSepolia, celo, celoSepolia, mainnet, polygon, optimism, arbitrum, base] as const;
 
 const connectors = connectorsForWallets(

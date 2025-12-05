@@ -2,13 +2,11 @@
 
 ![Helix Architecture](https://github.com/user-attachments/assets/9f872e33-3233-4f3f-91c6-28ce6b3cb165)
 
-**GitBook Documentation:** *https://ironjams-organization.gitbook.io/Helixv0*
+**Demo / Video:** *https://youtu.be/K63IxGqn9iA*
 
-**Demo / Video:** *https://www.youtube.com/watch?v=BJkFdprHhmY*
+**Contract Deployment:** *Ethereum Sepolia Testnet - 0xC381B1dd37B82810356EdD61Cb584e3228457aC7* 
 
-**Contract Deployment:** *Ethereum Sepolia Testnet - 0x14553856B61C2f653Cc167E31069068AC2c3f1d0* 
-
-**Pitch Deck:** *https://docs.google.com/presentation/d/1LXHewLD40gUQS4f7ee37pXC1SUblC3Uz/edit?usp=sharing&ouid=114427212853808112022&rtpof=true&sd=true*
+**Pitch Deck:** *https://docs.google.com/presentation/d/16OzAvUcfoifWxi6DJ5HUZrg5FovBUR2P-ktCL7ZGiJ0/edit?usp=sharing*
 
 ---
 
@@ -39,9 +37,6 @@ Helix enforces fairness and transparency through:
 1. **Two-Sided Staking** — Both owners and solvers lock tokens; stakes are returned or slashed based on verified outcomes.
 2. **Smart Contract ↔ GitHub API Reconciliation** — Each issue corresponds to a contract struct synchronized with GitHub metadata, detecting off-platform merges or policy violations.
 3. **Verifiable AI Agents** — Auditable AI models assist in PR review and code evaluation. Their actions and reputations are tracked on-chain.
-4. **Polkadot zk-Based Identity Verification** — Zero-knowledge proofs ensure every contributor is a legitimate human, preventing duplicate or fake identities.
-
-![Helix Workflow](https://github.com/user-attachments/assets/62f485cf-6c26-44a0-9dd4-ef69ebf900f7)
 
 ---
 
@@ -92,7 +87,8 @@ Helix enforces fairness and transparency through:
 
 * **Frontend:** Next.js 14, TypeScript, TailwindCSS, Wagmi, Viem
 * **Backend:** Python FastAPI, uAgents Framework
-* **Blockchain:** Ethereum **Sepolia testnet** (staking, issue management, reward distribution)
+* **Blockchain:** Ethereum Sepolia testnet, Solidity Smart Contracts
+* **Smart Contract Development:** Foundry (Forge, Cast, Anvil)
 * **AI:** MCP Protocol, Multi-Agent Systems, ASI One API
 * **Identity Layer:** Secure verification using advanced cryptographic proofs
 * **AI Agents:** Distributed verifiable agents for code analysis, PR evaluation, and trust scoring
@@ -211,17 +207,43 @@ cd ..
 
 ### 5. Smart Contract Setup
 
-#### Deploy Contract (Optional)
+The contract is already deployed on Sepolia at `0x14553856B61C2f653Cc167E31069068AC2c3f1d0`.
+
+#### Deploy Your Own Contract (Optional)
 If you want to deploy your own contract:
 
+**Prerequisites:**
+- Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
+- Get Sepolia ETH from [Sepolia Faucet](https://sepoliafaucet.com/)
+- Get API keys from [Infura](https://infura.io/) or [Alchemy](https://alchemy.com/)
+
+**Setup Environment:**
 ```bash
 cd contracts
-npm install
-npx hardhat compile
-npx hardhat deploy --network sepolia
+cp .env.example .env
+# Edit .env with your private key and API keys
 ```
 
-Update `NEXT_PUBLIC_CONTRACT_ADDRESS` with your deployed contract address.
+**Deploy Contract:**
+```bash
+# Compile contracts
+forge build
+
+# Deploy using the interactive script
+chmod +x deploy.sh
+./deploy.sh
+
+# Or deploy manually with Foundry
+forge script script/Deploy.s.sol:DeployDecentralizedIssueTracker \
+    --rpc-url https://rpc.sepolia.org \
+    --broadcast \
+    --verify \
+    --etherscan-api-key YOUR_ETHERSCAN_API_KEY \
+    -vvvv
+```
+
+**Update Frontend:**
+After deployment, update `NEXT_PUBLIC_CONTRACT_ADDRESS` in `monorepo/.env.local` with your new contract address.
 
 ### 6. Start the Application
 
@@ -295,7 +317,7 @@ npm run test
 ### Smart Contract Tests
 ```bash
 cd contracts
-npx hardhat test
+forge test
 ```
 
 ### Backend Tests

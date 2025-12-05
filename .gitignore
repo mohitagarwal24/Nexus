@@ -1,16 +1,53 @@
 # Virtual environments
 venv/
 */venv/
+.venv/
+env/
 
 # Python cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 
 # Environment files
-.env.local
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.log
+
+# Node.js dependencies
+node_modules/
+*/node_modules/
+
+# Next.js build output
+.next/
+*/.next/
+out/
+*/out/
+
+# Foundry/Hardhat artifacts
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+artifacts/
+cache/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # OS/system files
 .DS_Store
 Thumbs.db
+*.tmp
+*.temp
+
+# Build artifacts
+dist/
+build/
