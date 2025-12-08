@@ -53,7 +53,7 @@ export function Navbar() {
               <NavigationMenuItem>
                 <NavigationMenuLink asChild>
                   <a
-                    href="https://ironjams-organization.gitbook.io/Helixv0/"
+                    href="https://ironjams-organization.gitbook.io/Nexusv0/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex h-12 w-max items-center justify-center bg-black/80 border-2 border-green-400/50 px-6 py-3 text-base font-bold text-green-400 hover:border-green-400 hover:bg-green-900/20 transition-all duration-300 uppercase tracking-wider"

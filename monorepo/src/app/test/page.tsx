@@ -107,7 +107,7 @@ export default function TestPage() {
         functionName: 'createIssue',
         args: [
           formData.githubUrl || "https://github.com/test/repo/issues/1",
-          formData.description || "Test issue created via Helix platform",
+          formData.description || "Test issue created via Nexus platform",
           formData.difficulty,
           BigInt(formData.easyDuration),
           BigInt(formData.mediumDuration),

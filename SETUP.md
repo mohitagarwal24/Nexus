@@ -1,4 +1,4 @@
-# Helix Local Setup Guide
+# Nexus Local Setup Guide
 
 ## Prerequisites
 
@@ -134,6 +134,6 @@ If you encounter issues with Python packages, ensure you're using Python 3.8+ an
 
 ## Additional Resources
 
-- **Documentation**: https://ironjams-organization.gitbook.io/Helixv0
+- **Documentation**: https://ironjams-organization.gitbook.io/Nexusv0
 - **Demo Video**: https://www.youtube.com/watch?v=BJkFdprHhmY
 - **Contract**: Ethereum Sepolia Testnet - 0x14553856B61C2f653Cc167E31069068AC2c3f1d0

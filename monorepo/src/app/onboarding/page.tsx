@@ -53,10 +53,10 @@ export default function OnboardingPage() {
           <div className="mb-8 group relative">
             <h1 className="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-green-300 to-green-500 uppercase tracking-wider relative">
               <span className="relative inline-block">
-                Helix
+                Nexus
                 {/* Glitch overlay */}
                 <span className="absolute inset-0 text-green-400 opacity-70 animate-pulse" style={{ textShadow: '2px 0 red, -2px 0 cyan' }}>
-                  Helix
+                  Nexus
                 </span>
               </span>
             </h1>
@@ -120,7 +120,7 @@ export default function OnboardingPage() {
               PLATFORM STATISTICS
             </h2>
             <p className="text-lg text-green-100 max-w-2xl mx-auto">
-              Real-time metrics and statistics from the Helix ecosystem
+              Real-time metrics and statistics from the Nexus ecosystem
             </p>
           </div>
 
@@ -186,7 +186,7 @@ export default function OnboardingPage() {
               HOW IT WORKS
             </h2>
             <p className="text-lg text-green-100 max-w-2xl mx-auto">
-              Get started with Helix in three simple steps
+              Get started with Nexus in three simple steps
             </p>
           </div>
 
@@ -262,7 +262,7 @@ export default function OnboardingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
-              <h3 className="text-2xl font-bold text-green-400 mb-4 font-upheaval uppercase">Helix</h3>
+              <h3 className="text-2xl font-bold text-green-400 mb-4 font-upheaval uppercase">Nexus</h3>
               <p className="text-green-100 text-sm">
                 Blockchain-backed platform deployed on Ethereum Sepolia testnet. Making open-source collaboration trustless, fair, and secure with verifiable AI and secure identity verification.
               </p>
@@ -291,7 +291,7 @@ export default function OnboardingPage() {
 
           <div className="pt-8 border-t border-green-400/20">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-green-400 font-upheaval font-bold text-lg">Helix</div>
+              <div className="text-green-400 font-upheaval font-bold text-lg">Nexus</div>
               <div className="text-green-100 text-sm">
 
               </div>

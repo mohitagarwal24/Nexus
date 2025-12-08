@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="text-green-400 font-upheaval text-2xl animate-pulse">
-        REDIRECTING TO Helix...
+        REDIRECTING TO Nexus...
       </div>
     </div>
   );

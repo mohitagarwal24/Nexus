@@ -410,7 +410,7 @@ export const createDifficultyLabels = async (accessToken: string, owner: string,
     { name: 'difficulty:medium', color: '7CC0FF', description: 'Feature implementations, moderate complexity' },
     { name: 'difficulty:hard', color: 'FF9A51', description: 'Complex features, architectural changes' },
     { name: 'bounty', color: 'FCFF52', description: 'Issue has blockchain bounty attached' },
-    { name: 'Helix', color: 'B490FF', description: 'Managed by Helix platform' }
+    { name: 'Nexus', color: 'B490FF', description: 'Managed by Nexus platform' }
   ];
 
   // First, check which labels already exist

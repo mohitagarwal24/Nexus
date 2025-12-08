@@ -13,7 +13,7 @@ const inter = Inter({
 // Note: GT Alpina font will be loaded via CSS @font-face rules in globals.css
 
 export const metadata: Metadata = {
-  title: "Helix",
+  title: "Nexus",
   description: "",
 };
 

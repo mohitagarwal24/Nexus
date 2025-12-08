@@ -1,6 +1,6 @@
-# Helix 
+# Nexus 
 
-![Helix Architecture](https://github.com/user-attachments/assets/9f872e33-3233-4f3f-91c6-28ce6b3cb165)
+![Nexus Architecture](https://github.com/user-attachments/assets/9f872e33-3233-4f3f-91c6-28ce6b3cb165)
 
 **Demo / Video:** *https://youtu.be/K63IxGqn9iA*
 
@@ -12,7 +12,7 @@
 
 ## Introduction
 
-**Helix** is a blockchain-backed platform that makes open-source collaboration **trustless, fair, and secure**. It combines a **two-sided staking protocol** (for both repository owners and issue solvers) with **verifiable AI agents** and **secure user verification** to eliminate collusion, overruns, Sybil attacks, and identity fraud.
+**Nexus** is a blockchain-backed platform that makes open-source collaboration **trustless, fair, and secure**. It combines a **two-sided staking protocol** (for both repository owners and issue solvers) with **verifiable AI agents** and **secure user verification** to eliminate collusion, overruns, Sybil attacks, and identity fraud.
 
 **Deployed on:** Ethereum **Sepolia testnet**
 
@@ -32,7 +32,7 @@ This ensures predictable incentives, protected contributors (especially new deve
 
 ## High-Level Solution
 
-Helix enforces fairness and transparency through:
+Nexus enforces fairness and transparency through:
 
 1. **Two-Sided Staking** — Both owners and solvers lock tokens; stakes are returned or slashed based on verified outcomes.
 2. **Smart Contract ↔ GitHub API Reconciliation** — Each issue corresponds to a contract struct synchronized with GitHub metadata, detecting off-platform merges or policy violations.
@@ -46,7 +46,7 @@ Helix enforces fairness and transparency through:
 
 * **Prevent collusion or copying:** Owners cannot bypass contributor PRs without losing their stake.
 * **Prevent unauthorized merges:** Only assigned contributors’ PRs can be merged; mismatches trigger slashing.
-* **Align incentives:** Owners are economically motivated to follow Helix’s workflow, ensuring fairness.
+* **Align incentives:** Owners are economically motivated to follow Nexus’s workflow, ensuring fairness.
 
 ### Why Solvers (Contributors) Stake
 
@@ -73,7 +73,7 @@ Helix enforces fairness and transparency through:
 
 ---
 
-## Why Helix Is Better Than Traditional Platforms
+## Why Nexus Is Better Than Traditional Platforms
 
 * **Automated fairness:** Smart contracts handle reward release without manual intervention.
 * **Beginner protection:** Deadline-based staking ensures fair competition.
@@ -109,8 +109,8 @@ Helix enforces fairness and transparency through:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/helix.git
-cd helix
+git clone https://github.com/your-username/Nexus.git
+cd Nexus
 ```
 
 ### 2. Environment Configuration
@@ -134,7 +134,7 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
 NEXT_PUBLIC_CONTRACT_ADDRESS=0x14553856B61C2f653Cc167E31069068AC2c3f1d0
 
 # Self.xyz Integration (Optional)
-NEXT_PUBLIC_SELF_APP_NAME=Helix
+NEXT_PUBLIC_SELF_APP_NAME=Nexus
 NEXT_PUBLIC_SELF_SCOPE=
 NEXT_PUBLIC_SELF_ENDPOINT=
 ```
@@ -185,7 +185,7 @@ cd ..
 
 1. Go to [GitHub Developer Settings](https://github.com/settings/applications/new)
 2. Create a new OAuth App:
-   - **Application name:** Helix
+   - **Application name:** Nexus
    - **Homepage URL:** http://localhost:3000
    - **Authorization callback URL:** http://localhost:3000/api/auth/callback/github
 3. Copy Client ID and Client Secret to your `.env.local`
@@ -339,8 +339,8 @@ npm run build
 ### Backend Deployment
 ```bash
 # Docker deployment
-docker build -t helix-backend .
-docker run -p 5000:5000 helix-backend
+docker build -t Nexus-backend .
+docker run -p 5000:5000 Nexus-backend
 ```
 
 ---
@@ -363,5 +363,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Summary
 
-Helix brings **trustless accountability** to open-source collaboration through a hybrid of **staking, verifiable AI, and zk-identity verification**. By ensuring that every contribution is genuine, auditable, and economically aligned, Helix restores transparency, fairness, and trust to the open-source ecosystem.
+Nexus brings **trustless accountability** to open-source collaboration through a hybrid of **staking, verifiable AI, and zk-identity verification**. By ensuring that every contribution is genuine, auditable, and economically aligned, Nexus restores transparency, fairness, and trust to the open-source ecosystem.
 

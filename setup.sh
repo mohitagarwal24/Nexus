@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Setting up Helix project..."
+echo "🚀 Setting up Nexus project..."
 
 # Check if Python virtual environment exists
 if [ ! -d "venv" ]; then

@@ -1,0 +1,36 @@
+{
+  "name": "adk-nexus",
+  "version": "1.0.0",
+  "description": "ADK-TS Multi-Agent Repository Analysis System",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "server": "tsx src/server.ts",
+    "test": "tsx src/test.ts"
+  },
+  "keywords": [
+    "adk-ts",
+    "ai",
+    "agents",
+    "repository-analysis",
+    "github"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@iqai/adk": "^0.5.7",
+    "@types/node": "^24.10.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6"
+  }
+}
