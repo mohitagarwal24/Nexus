@@ -198,7 +198,7 @@ export default function ClientProviders({ children }: { children: ReactNode }) {
           <RainbowKitProvider
             theme={customTheme}
             modalSize="compact"
-            initialChain={celoSepolia}
+            initialChain={sepolia}
             showRecentTransactions={true}
             coolMode={true}
           >
