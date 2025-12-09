@@ -1,4 +1,4 @@
-# Nexus — Autonomous AI Agent for Trustless Open-Source Collaboration
+# Nexus — Trustless Open-Source Collaboration Platform
 
 **AGENT ARENA Hackathon Submission | Track 1: On-Chain AI Agents**
 
@@ -18,51 +18,44 @@
 
 ## Introduction
 
-**Nexus** is an autonomous AI agent platform built with **ADK-TS** that revolutionizes open-source collaboration through **verifiable on-chain intelligence**. Our unified **NexusIntelligenceAgent** performs comprehensive repository analysis, generates actionable GitHub issues, and enforces trustless collaboration through smart contract automation.
+**Nexus** is a blockchain-backed platform that makes open-source collaboration **trustless, fair, and secure**. It combines a **two-sided staking protocol** with **verifiable AI agents** and **secure user verification** to eliminate collusion, overruns, Sybil attacks, and identity fraud.
 
-**Built for AGENT ARENA using:**
-- **IQAI's ADK-TS Framework** for autonomous agent development
-- **Agent Tokenization Platform (ATP)** ready for deployment
-- **On-chain verification** and reputation systems
-- **Blockchain-enforced fairness** through smart contracts
+**Core Mission:** Replace trust-based open-source collaboration with deterministic, blockchain-enforced fairness.
 
-**Deployed on:** Ethereum **Sepolia testnet** with full Web3 integration
+**AI Agent Integration:** Built with **IQAI's ADK-TS Framework**, our **NexusIntelligenceAgent** provides verifiable repository analysis and issue generation as part of the broader trustless ecosystem.
+
+**Deployed on:** Ethereum **Sepolia testnet** with full smart contract enforcement
 
 ---
 
-## The Problem Nexus Solves
+## The Problem
 
-Open-source development faces critical challenges that limit collaboration and innovation:
-
-* **Opaque AI assistance:** Current AI tools lack transparency and verifiability in their recommendations
-* **Manual coordination bottlenecks:** Issue creation and assignment depend entirely on maintainer availability
-* **Trust-based systems:** Existing platforms rely on human goodwill rather than enforceable rules
-* **Contributor protection gaps:** New developers lack protection against experienced contributors taking over their work
-* **Identity verification issues:** Sybil attacks and fake accounts undermine fair participation
+* **Collusion and code appropriation:** Maintainers may view PRs and reuse code without merging or rewarding contributors.
+* **Incentive misalignment:** Experienced developers can unintentionally overrun newcomers' PRs, leading to unfair outcomes.
+* **Centralized trust dependency:** Platforms like Gitcoin depend on manual fund releases by maintainers.
+* **Fake accounts and Sybil attacks:** Multiple identities distort fairness and reward distribution.
+* **Unverified human contribution:** Without verified identities, human participation cannot be proven.
+* **Opaque AI assistance:** Current AI tools lack transparency and verifiability in their recommendations.
 
 ---
 
-## Our ADK-TS Solution
+## High-Level Solution
 
-Nexus introduces **autonomous, verifiable AI agents** that operate transparently on-chain:
+Nexus enforces fairness and transparency through:
 
-### 1. NexusIntelligenceAgent (Built with ADK-TS)
-- **Unified repository analysis** combining code review, security auditing, and feature suggestion
-- **Gemini 2.5 Flash integration** for advanced reasoning capabilities
-- **Structured output generation** with JSON-formatted recommendations
-- **ATP-ready architecture** for seamless tokenization and deployment
+1. **Two-Sided Staking** — Both owners and solvers lock tokens; stakes are returned or slashed based on verified outcomes.
+2. **Smart Contract ↔ GitHub API Reconciliation** — Each issue corresponds to a contract struct synchronized with GitHub metadata, detecting off-platform merges or policy violations.
+3. **Verifiable AI Agents** — Built with **ADK-TS**, our agents provide auditable repository analysis and issue generation, with actions and reputations tracked on-chain.
 
-### 2. Blockchain-Enforced Automation
-- **Smart contract integration** ensuring AI recommendations are actionably implemented
-- **Two-sided staking protocol** protecting both maintainers and contributors
-- **GitHub API reconciliation** preventing off-platform manipulation
-- **Transparent reputation tracking** for long-term agent accountability
+### ADK-TS Agent Integration
 
-### 3. Verifiable Intelligence Pipeline
-- **MCP protocol integration** for modular agent composition
-- **On-chain verification** of AI decision-making processes
-- **Deterministic outcomes** replacing subjective human judgment
-- **Audit-friendly transparency** in all agent operations
+Our **NexusIntelligenceAgent** enhances the trustless platform by:
+- **Automating repository analysis** to reduce maintainer coordination bottlenecks
+- **Generating verifiable issue recommendations** with transparent reasoning
+- **Providing audit trails** for all AI decisions through blockchain storage
+- **Enabling autonomous operation** while maintaining human oversight and control
+
+**📋 Detailed Implementation:** See [ADK-TS Implementation Guide](./ADK_TS_IMPLEMENTATION.md) for comprehensive technical details, code examples, and architecture documentation.
 
 ---
 
@@ -135,41 +128,42 @@ const result = await githubClient.createIssue(owner, repo, issueData);
 
 ---
 
-## Why Nexus Advances Autonomous AI
+## Why Nexus Is Better Than Traditional Platforms
 
-* **Verifiable intelligence:** All agent decisions are transparent and auditable on-chain
-* **Economic accountability:** Agent reputation directly impacts future task selection
-* **Deterministic outcomes:** Smart contracts eliminate subjective human bias
-* **ATP-ready deployment:** Built specifically for tokenization and autonomous operation
-* **Real-world integration:** Direct GitHub API reconciliation ensures practical utility
+* **Automated fairness:** Smart contracts handle reward release without manual intervention.
+* **Beginner protection:** Deadline-based staking ensures fair competition.
+* **Verified human contribution:** Secure verification confirms authenticity.
+* **Sybil and DoS resistance:** Contributor staking and nullifier checks prevent abuse.
+* **Transparent AI:** All AI decisions are auditable and verifiable on-chain.
+* **Economic accountability:** Agent reputation directly impacts future task selection through ATP-ready architecture.
 
 ---
 
-## Tech Stack & AGENT ARENA Compliance
+## Tech Stack
 
-### Core AI Agent Framework
-* **ADK-TS (Agent Development Kit - TypeScript)** - Primary framework for agent development
-* **Google Gemini 2.5 Flash** - LLM integration for intelligent analysis
-* **MCP Protocol** - Model Context Protocol for agent interoperability
-* **ATP-Ready Architecture** - Built for Agent Tokenization Platform deployment
-
-### Blockchain & Smart Contracts
+### Blockchain & Smart Contracts (Core Platform)
 * **Ethereum Sepolia Testnet** - Live deployment environment
 * **Solidity Smart Contracts** - Trustless execution and verification
 * **Foundry Framework** - Smart contract development and testing
 * **Wagmi + Viem** - Web3 integration and wallet connectivity
 
+### AI Agent Layer (AGENT ARENA Compliance)
+* **ADK-TS (Agent Development Kit - TypeScript)** - Framework for verifiable AI agents
+* **Google Gemini 2.5 Flash** - LLM integration for repository analysis
+* **MCP Protocol** - Model Context Protocol for GitHub operations
+* **ATP-Ready Architecture** - Built for Agent Tokenization Platform deployment
+
 ### Full-Stack Implementation
 * **Frontend:** Next.js 14, TypeScript, TailwindCSS, RainbowKit
-* **Backend:** Express.js server with ADK-TS agent integration
-* **Database:** On-chain storage with smart contract state management
-* **APIs:** GitHub API integration, RESTful endpoints for agent communication
+* **Backend:** Express.js server with smart contract integration
+* **Identity Layer:** Secure verification using advanced cryptographic proofs
+* **GitHub Integration:** Smart contract state continuously reconciled with GitHub data
 
-### Agent-Specific Features
-* **NexusIntelligenceAgent** - Single unified agent replacing multi-agent complexity
+### AI Agent Features
+* **NexusIntelligenceAgent** - Unified repository analysis and issue generation
 * **Verifiable outputs** - All agent decisions stored on-chain for transparency
 * **Reputation tracking** - Long-term accountability through blockchain records
-* **Economic incentives** - Token-based rewards aligned with agent performance
+* **Economic incentives** - Token-based rewards aligned with platform fairness goals
 
 ---
 
@@ -471,6 +465,8 @@ const parsedResult = this.parseAnalysisResponse(analysisResponse);
 - On-chain reputation and performance tracking
 - Economic incentive alignment for autonomous operation
 - Verifiable decision-making processes
+
+**📋 Complete Technical Details:** [ADK-TS Implementation Guide](./ADK_TS_IMPLEMENTATION.md) - Comprehensive documentation with code examples, architecture diagrams, and integration details.
 
 ### Innovation & Impact
 

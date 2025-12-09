@@ -1,12 +1,12 @@
 # Nexus — AGENT ARENA Hackathon Submission
 
-**Track 1: On-Chain AI Agents | Built with ADK-TS**
+**Track 1: On-Chain AI Agents | Trustless Open-Source Collaboration Platform**
 
 ---
 
 ## Project Overview
 
-**Nexus** is an autonomous AI agent platform that revolutionizes open-source collaboration through verifiable on-chain intelligence. Our **NexusIntelligenceAgent**, built entirely with **IQAI's ADK-TS framework**, performs comprehensive repository analysis and enforces trustless collaboration through smart contract automation.
+**Nexus** is a blockchain-backed platform that makes open-source collaboration **trustless, fair, and secure** through smart contract enforcement and two-sided staking protocols. Our **NexusIntelligenceAgent**, built with **IQAI's ADK-TS framework**, enhances this trustless ecosystem by providing verifiable repository analysis and automated issue generation.
 
 **Live Demo:** [https://nexus-frontend-kappa.vercel.app](https://nexus-frontend-kappa.vercel.app)
 
@@ -96,16 +96,18 @@ const githubPayload = this.createGitHubIssuePayload(analysisResult.selectedFeatu
 ## Problem Solved
 
 ### Current Open-Source Development Issues:
-- **Manual coordination bottlenecks** - Maintainers overwhelmed with issue creation
-- **Opaque AI assistance** - No transparency in AI recommendations
-- **Trust-based systems** - Reliance on human goodwill rather than enforceable rules
-- **Contributor protection gaps** - New developers lack protection against overruns
+- **Collusion and code appropriation** - Maintainers can view PRs and reuse code without attribution
+- **Trust-based reward systems** - Platforms like Gitcoin rely on manual fund releases
+- **Contributor overruns** - Experienced developers can take over newcomers' work unfairly
+- **Sybil attacks** - Fake accounts distort fairness and reward distribution
+- **Manual coordination bottlenecks** - Maintainers overwhelmed with issue creation and management
 
 ### Nexus Solution:
-- **Autonomous issue generation** through intelligent repository analysis
-- **Verifiable AI decisions** with full transparency and audit trails
-- **Smart contract enforcement** eliminating trust dependencies
-- **Economic protection** for all participants through staking mechanisms
+- **Two-sided staking protocol** ensuring economic accountability for all participants
+- **Smart contract enforcement** eliminating trust dependencies and manual interventions
+- **Blockchain-GitHub reconciliation** detecting unauthorized merges and policy violations
+- **Verifiable AI assistance** through ADK-TS agents providing transparent repository analysis
+- **Identity verification** preventing Sybil attacks and ensuring genuine participation
 
 ---
 
@@ -218,8 +220,10 @@ const githubPayload = this.createGitHubIssuePayload(analysisResult.selectedFeatu
 
 ## Conclusion
 
-**Nexus** represents the future of autonomous AI agents in practical, real-world applications. Built with **ADK-TS** and ready for **ATP deployment**, our platform demonstrates how verifiable AI can transform entire industries through transparent, economically-aligned automation.
+**Nexus** demonstrates how **trustless blockchain protocols** can revolutionize open-source collaboration by eliminating reliance on human goodwill and manual processes. Our **ADK-TS-powered NexusIntelligenceAgent** enhances this trustless ecosystem by providing verifiable, transparent AI assistance that operates within the broader framework of smart contract enforcement and economic accountability.
 
-**For AGENT ARENA judges:** This submission showcases the full potential of IQAI's ADK-TS framework in creating autonomous agents that solve real problems, generate sustainable value, and operate transparently on-chain — exactly what the Agent Tokenization Platform was designed to enable.
+**For AGENT ARENA judges:** This submission showcases how IQAI's ADK-TS framework can be integrated into larger blockchain platforms to provide verifiable AI capabilities that enhance trustless systems. Our agent operates transparently on-chain, maintains reputation scores, and generates economic value within a proven two-sided staking protocol — demonstrating practical ATP readiness in a real-world application.
 
+**Platform Mission:** Making open-source collaboration trustless and secure.
+**AI Agent Role:** Enhancing the platform with verifiable intelligence and automation.
 **Ready for ATP launch on December 12, 2025.**
