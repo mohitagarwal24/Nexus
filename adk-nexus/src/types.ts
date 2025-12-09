@@ -5,6 +5,7 @@
 export interface RepositoryAnalysisRequest {
     repoUrl: string;
     analysisType?: 'full' | 'quick' | 'feature-focused';
+    userGitHubToken?: string; // User's GitHub OAuth token for repository access
 }
 
 export interface AgentAnalysisResult {

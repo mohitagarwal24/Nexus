@@ -5,8 +5,6 @@ import { publishVerificationUpdate } from '@/lib/verifyEvents'
 // Configure from environment, aligned with /self page
 const SCOPE = process.env.NEXT_PUBLIC_SELF_SCOPE || 'self'
 const ENDPOINT = process.env.NEXT_PUBLIC_SELF_ENDPOINT || 'http://localhost:3000/api/verify'
-const USER_ID_TYPE: 'hex' | 'uuid' = 'hex'
-const MOCK_PASSPORT = process.env.SELF_MOCK_PASSPORT === 'true' || process.env.NODE_ENV !== 'production'
 
 // Reuse a single verifier instance
 const selfBackendVerifier = new SelfBackendVerifier(

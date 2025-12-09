@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server'
-import { addClient, getLatestVerification } from '@/lib/verifyEvents'
+import { addClient } from '@/lib/verifyEvents'
 
 export const runtime = 'nodejs' // ensure Node runtime for streaming
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       // Register client and send the latest snapshot
@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest) {
       const cancel = () => {
         clearInterval(keepAlive)
         remove()
-        try { controller.close() } catch {}
+        try { controller.close() } catch { }
       }
 
       // @ts-expect-error - not typed on ReadableStreamDefaultController

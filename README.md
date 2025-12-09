@@ -116,16 +116,17 @@ cd Nexus
 ### 2. Environment Configuration
 
 #### Frontend Environment (.env.local)
-Create `monorepo/.env.local`:
+Create `frontend/.env.local`:
 
 ```bash
 # NextAuth.js Configuration
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-nextauth-secret-key-here
 
-# GitHub OAuth (Create at: https://github.com/settings/applications/new)
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
+# GitHub OAuth App (Create at: https://github.com/settings/applications/new)
+# This allows users to connect ANY GitHub account, not just yours
+GITHUB_CLIENT_ID=your-oauth-app-client-id
+GITHUB_CLIENT_SECRET=your-oauth-app-client-secret
 
 # WalletConnect Project ID (Get from: https://cloud.walletconnect.com/)
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
@@ -146,8 +147,9 @@ Create `.env` in adk-nexus directory:
 # Google Gemini API Key (Get from: https://makersuite.google.com/app/apikey)
 GOOGLE_API_KEY=your-google-api-key
 
-# GitHub API Token (Create at: https://github.com/settings/tokens)
-GITHUB_TOKEN=your-github-personal-access-token
+# GitHub API Token (Optional - only for backend operations)
+# Users will authenticate via OAuth, this is for server-side operations
+GITHUB_TOKEN=your-server-github-token
 
 # Server Configuration
 PORT=5000
@@ -162,7 +164,7 @@ ANTHROPIC_API_KEY=your-anthropic-api-key
 
 #### Frontend Setup
 ```bash
-cd monorepo
+cd frontend
 npm install
 ```
 
@@ -179,23 +181,31 @@ cd ..
 
 ### 4. Configuration Guide
 
-#### GitHub OAuth Setup
+#### GitHub OAuth Setup (For User Authentication)
+
+**Important**: This OAuth app allows ANY user to connect their GitHub account to Nexus.
 
 1. Go to [GitHub Developer Settings](https://github.com/settings/applications/new)
 2. Create a new OAuth App:
-   - **Application name:** Nexus
-   - **Homepage URL:** http://localhost:3000
+   - **Application name:** Nexus Platform
+   - **Homepage URL:** http://localhost:3000 (or your domain)
    - **Authorization callback URL:** http://localhost:3000/api/auth/callback/github
-3. Copy Client ID and Client Secret to your `.env.local`
+   - **Application description:** "Blockchain-backed platform for trustless open-source collaboration"
+3. Copy Client ID and Client Secret to your `frontend/.env.local`
 
-#### GitHub Token Setup
+**Note**: Users will authenticate with their own GitHub accounts through this OAuth app.
+
+#### GitHub Token Setup (Optional - For Server Operations)
+
+**This is optional and only needed for server-side GitHub operations.**
 
 1. Go to [GitHub Personal Access Tokens](https://github.com/settings/tokens)
-2. Generate a new token with these scopes:
-   - `repo` (Full control of private repositories)
+2. Generate a new token with minimal scopes:
+   - `public_repo` (Access public repositories)
    - `read:user` (Read user profile data)
-   - `user:email` (Access user email addresses)
-3. Copy the token to `GITHUB_TOKEN` in your `.env`
+3. Copy the token to `GITHUB_TOKEN` in your `adk-nexus/.env`
+
+**Note**: User repositories are accessed through their OAuth tokens, not this server token.
 
 #### WalletConnect Setup
 
@@ -241,13 +251,13 @@ forge script script/Deploy.s.sol:DeployDecentralizedIssueTracker \
 ```
 
 **Update Frontend:**
-After deployment, update `NEXT_PUBLIC_CONTRACT_ADDRESS` in `monorepo/.env.local` with your new contract address.
+After deployment, update `NEXT_PUBLIC_CONTRACT_ADDRESS` in `frontend/.env.local` with your new contract address.
 
 ### 6. Start the Application
 
 #### Terminal 1: Frontend
 ```bash
-cd monorepo
+cd frontend
 npm run dev
 ```
 
@@ -299,7 +309,7 @@ npm run server
 
 ### Frontend Tests
 ```bash
-cd monorepo
+cd frontend
 npm run test
 ```
 
@@ -321,7 +331,7 @@ npm test
 
 ### Frontend Deployment (Vercel)
 ```bash
-cd monorepo
+cd frontend
 npm run build
 # Deploy to Vercel or your preferred platform
 ```

@@ -1,5 +1,4 @@
 // GitHub API utilities for issue management
-import { Session } from "next-auth";
 
 export interface GitHubRepo {
   id: number;

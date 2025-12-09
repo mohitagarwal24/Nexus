@@ -17,21 +17,17 @@ import {
   DollarSign,
   User,
   Calendar,
-  Tag,
   ExternalLink,
   Loader2,
   CheckCircle2,
   AlertCircle,
   GitBranch,
   Zap,
-  Filter,
   Search,
   Plus,
   X,
   Info,
-  TrendingUp,
-  Shield,
-  Target
+  Shield
 } from "lucide-react";
 import Link from "next/link";
 
@@ -61,7 +57,7 @@ interface Issue {
 }
 
 const difficultyLabels = ['Easy', 'Medium', 'Hard'];
-const difficultyColors = ['bg-[#56DF7C]', 'bg-[#FF9A51]', 'bg-[#B490FF]'];
+// const difficultyColors = ['bg-[#56DF7C]', 'bg-[#FF9A51]', 'bg-[#B490FF]']; // Unused for now
 
 export default function IssuesPage() {
   const { address, isConnected } = useAccount();
@@ -77,7 +73,7 @@ export default function IssuesPage() {
   const [stakeAmount, setStakeAmount] = useState("");
 
   // Contract write hook for taking issues
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContract, data: hash, isPending } = useWriteContract();
 
   // Wait for transaction receipt
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
@@ -101,7 +97,7 @@ export default function IssuesPage() {
     console.log('Contract Error:', contractError);
     console.log('Issues Loading:', issuesLoading);
     console.log('Issue IDs Data:', issueIds);
-  }, [CONTRACT_ADDRESS, issuesError, contractError, issuesLoading, issueIds]);
+  }, [issuesError, contractError, issuesLoading, issueIds]);
 
   // Fetch full issue details when issue IDs are loaded
   useEffect(() => {

@@ -17,8 +17,18 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
+// Configure CORS for production and development
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    // Add production frontend URL from environment
+    process.env.FRONTEND_URL
+].filter(Boolean) as string[];
+
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -73,6 +83,14 @@ app.post('/api/analyze-repo', async (req, res) => {
         console.log('📥 API: Received repository analysis request');
         console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
 
+        // Extract user's GitHub token from Authorization header
+        const authHeader = req.headers.authorization;
+        const userGitHubToken = authHeader?.startsWith('Bearer ')
+            ? authHeader.substring(7)
+            : null;
+
+        console.log('🔐 User GitHub token present:', !!userGitHubToken);
+
         // Support both repoUrl and repo_url for frontend compatibility
         const repoUrl = req.body.repoUrl || req.body.repo_url;
         const analysisType = req.body.analysisType || req.body.analysis_type || 'full';
@@ -120,10 +138,11 @@ app.post('/api/analyze-repo', async (req, res) => {
 
         console.log(`🔍 API: Analyzing repository: ${repoUrl}`);
 
-        // Perform analysis
+        // Perform analysis with user's GitHub token
         const request: RepositoryAnalysisRequest = {
             repoUrl,
-            analysisType: analysisType as 'full' | 'quick' | 'feature-focused'
+            analysisType: analysisType as 'full' | 'quick' | 'feature-focused',
+            userGitHubToken: userGitHubToken || undefined // Pass user's token for repository access
         };
 
         const result = await analyzer.analyzeRepository(request);

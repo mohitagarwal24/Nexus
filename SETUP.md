@@ -45,8 +45,9 @@ Copy and configure the `.env` file in the adk-nexus directory:
 # Google Gemini API Key (required for ADK-TS)
 GOOGLE_API_KEY=your_google_api_key_here
 
-# GitHub API Token (for repository integration)
-GITHUB_TOKEN=your_github_token_here
+# GitHub API Token (Optional - for server-side operations only)
+# Users authenticate via OAuth, this is for backend operations
+GITHUB_TOKEN=your_server_github_token_here
 
 # Server Configuration
 PORT=5000
@@ -57,17 +58,17 @@ OPENAI_API_KEY=your_openai_key_here
 ANTHROPIC_API_KEY=your_anthropic_key_here
 ```
 
-### Frontend (monorepo/.env.local)
-Copy and configure the `.env.local` file in the monorepo directory:
+### Frontend (frontend/.env.local)
+Copy and configure the `.env.local` file in the frontend directory:
 
 ```bash
 # NextAuth.js
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-key-here
 
-# GitHub OAuth (Get from GitHub Developer Settings)
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
+# GitHub OAuth App (Allows ANY user to connect their GitHub)
+GITHUB_CLIENT_ID=your-oauth-app-client-id
+GITHUB_CLIENT_SECRET=your-oauth-app-client-secret
 
 # WalletConnect (Get from https://cloud.walletconnect.com/)
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-walletconnect-project-id
@@ -86,7 +87,7 @@ npm run server
 
 ### Start Frontend (Terminal 2)
 ```bash
-cd monorepo
+cd frontend
 npm run dev
 ```
 
@@ -96,21 +97,30 @@ The application will be available at:
 
 ## Required API Keys & Setup
 
-### 1. GitHub OAuth App
+### 1. GitHub OAuth App (For User Authentication)
 1. Go to GitHub Settings > Developer settings > OAuth Apps
-2. Create a new OAuth App
-3. Set Authorization callback URL to: `http://localhost:3000/api/auth/callback/github`
-4. Copy Client ID and Client Secret to `.env.local`
+2. Create a new OAuth App:
+   - **Name:** Nexus Platform
+   - **Homepage URL:** http://localhost:3000
+   - **Authorization callback URL:** `http://localhost:3000/api/auth/callback/github`
+   - **Description:** "Allows users to connect their GitHub accounts to Nexus"
+3. Copy Client ID and Client Secret to `frontend/.env.local`
+
+**Important:** This OAuth app enables ANY user to authenticate with their own GitHub account.
 
 ### 2. WalletConnect Project ID
 1. Visit https://cloud.walletconnect.com/
 2. Create a new project
 3. Copy the Project ID to `.env.local`
 
-### 3. GitHub Personal Access Token
+### 3. GitHub Personal Access Token (Optional)
 1. Go to GitHub Settings > Developer settings > Personal access tokens
-2. Generate a new token with repo permissions
-3. Add to backend `.env` file
+2. Generate a new token with minimal permissions:
+   - `public_repo` (for public repositories)
+   - `read:user` (for user profile)
+3. Add to backend `adk-nexus/.env` file
+
+**Note:** This is optional and only for server-side operations. Users access their repos via OAuth.
 
 ## Troubleshooting
 
@@ -132,7 +142,7 @@ If you encounter issues with the ADK-TS backend, ensure you have Node.js 18+ and
 │   ├── src/              # TypeScript source code
 │   ├── package.json      # Node.js dependencies
 │   └── .env              # Backend environment variables
-├── monorepo/             # Next.js frontend
+├── frontend/             # Next.js frontend
 │   ├── src/              # Frontend source code
 │   ├── package.json      # Node.js dependencies
 │   └── .env.local        # Frontend environment variables

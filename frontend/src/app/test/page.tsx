@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button';
 import { CONTRACT_ABI } from '@/app/config/abi';
 import {
   AlertCircle,
-  CheckCircle2,
   Loader2,
-  ExternalLink,
   Terminal,
   Play,
   Trash2,
@@ -224,7 +222,7 @@ export default function TestPage() {
 
         // For each issue ID, we would need to call getIssueInfo to get details
         // For now, just show the IDs
-        issueIds.forEach((issueId: any, index: number) => {
+        issueIds.forEach((issueId: bigint | number, index: number) => {
           addLog(`Issue ID #${index}: ${issueId.toString()}`);
         });
 

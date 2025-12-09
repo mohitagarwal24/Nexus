@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, User, Building, Github, Wallet, Zap, CheckCircle, DollarSign, Users, Activity, TrendingUp, BarChart3, Code, Shield, Target, Terminal } from "lucide-react";
+import { DollarSign, Users, Activity, Terminal, TrendingUp } from "lucide-react";
 
 export default function OnboardingPage() {
   const handleGetStarted = () => {

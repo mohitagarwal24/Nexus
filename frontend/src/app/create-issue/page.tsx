@@ -250,7 +250,7 @@ export default function CreateIssuePage() {
   };
 
   // Function to fetch bounty information for GitHub issues
-  const fetchIssueBounties = async (issues: GitHubIssue[]) => {
+  const fetchIssueBounties = async (_issues: GitHubIssue[]) => {
     if (!existingIssueIds || !Array.isArray(existingIssueIds) || fetchingBounties) {
       return;
     }
@@ -263,7 +263,7 @@ export default function CreateIssuePage() {
       const { readContract } = await import('viem/actions');
       const { createPublicClient, http } = await import('viem');
       const { sepolia } = await import('viem/chains');
-      const { formatEther } = await import('viem');
+      // const { formatEther } = await import('viem'); // Unused for now
 
       const publicClient = createPublicClient({
         chain: sepolia,
@@ -504,7 +504,7 @@ export default function CreateIssuePage() {
     }
   };
 
-  const createGitHubIssue = async () => {
+  const _createGitHubIssue = async () => {
     if (!session?.accessToken || !selectedRepo) return null;
 
     try {
@@ -847,7 +847,7 @@ export default function CreateIssuePage() {
           <div>
             <h1 className="text-4xl md:text-6xl font-bold text-green-400 uppercase tracking-wider mb-2">ISSUE MANAGEMENT</h1>
             <p className="text-lg text-green-100 max-w-2xl">
-              Create blockchain-backed issues with bounties and manage your repository's workflow
+              Create blockchain-backed issues with bounties and manage your repository&apos;s workflow
             </p>
           </div>
 

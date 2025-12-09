@@ -3,29 +3,23 @@
 import { useState, useEffect } from 'react';
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu"
 
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import Image from "next/image"
-import { useSidebar } from "@/components/ui/sidebar"
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useAccount } from 'wagmi';
 import { Github, Wallet, AlertCircle } from "lucide-react";
-import { WEBSITE_LOGO_PATH as LOGO_PATH, WEBSITE_NAME, WEBSITE_TITLE_FONT as WEBSITE_FONT } from "@/utils/constants/navbarConstants"
+import { WEBSITE_NAME } from "@/utils/constants/navbarConstants"
 
 export function Navbar() {
   const { data: session } = useSession();
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
-
-  const bothConnected = session && isConnected;
   const needsConnection = !session || !isConnected;
 
   useEffect(() => {
