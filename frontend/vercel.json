@@ -11,11 +11,11 @@
     "rewrites": [
         {
             "source": "/api/analyze-repo",
-            "destination": "$NEXT_PUBLIC_API_URL/api/analyze-repo"
+            "destination": "https://nexus-fgqs.onrender.com/api/analyze-repo"
         },
         {
             "source": "/api/create-github-issue",
-            "destination": "$NEXT_PUBLIC_API_URL/api/create-github-issue"
+            "destination": "https://nexus-fgqs.onrender.com/api/create-github-issue"
         }
     ],
     "headers": [

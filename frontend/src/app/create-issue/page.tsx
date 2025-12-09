@@ -540,7 +540,7 @@ export default function CreateIssuePage() {
     setIsAnalyzing(true);
     try {
       const repoUrl = `https://github.com/${selectedRepo}`;
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/analyze-repo`, {
+      const response = await fetch('/api/analyze-repo', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
