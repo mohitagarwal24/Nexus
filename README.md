@@ -1,6 +1,6 @@
 # Nexus 
 
-![Nexus Architecture](https://github.com/user-attachments/assets/9f872e33-3233-4f3f-91c6-28ce6b3cb165)
+![Nexus Architecture]<img width="1496" height="658" alt="image" src="https://github.com/user-attachments/assets/1cf17294-5d53-4d87-aa74-53421c28ddbf" />
 
 **Demo / Video:** *https://youtu.be/K63IxGqn9iA*
 
