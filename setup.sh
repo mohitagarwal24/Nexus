@@ -1,32 +1,31 @@
 #!/bin/bash
 
-echo "🚀 Setting up Nexus project..."
+echo "🚀 Setting up Nexus project with ADK-TS..."
 
-# Check if Python virtual environment exists
-if [ ! -d "venv" ]; then
-    echo "📦 Creating Python virtual environment..."
-    python3 -m venv venv
-fi
-
-# Activate virtual environment and install Python dependencies
-echo "🐍 Installing Python dependencies..."
-source venv/bin/activate
-pip install -r requirements.txt
+# Setup ADK-TS backend dependencies
+echo "🤖 Setting up ADK-TS backend..."
+cd adk-nexus
+npm install
+echo "✅ ADK-TS backend dependencies installed"
+cd ..
 
 # Setup frontend dependencies
 echo "⚛️  Setting up Next.js frontend..."
 cd monorepo
 npm install --legacy-peer-deps
+echo "✅ Frontend dependencies installed"
+cd ..
 
 echo "✅ Setup complete!"
 echo ""
 echo "📋 Next steps:"
 echo "1. Configure environment variables:"
-echo "   - Edit .env for Python backend"
-echo "   - Edit monorepo/.env.local for Next.js frontend"
+echo "   - Edit adk-nexus/.env for ADK-TS backend (Google API key, GitHub token)"
+echo "   - Edit monorepo/.env.local for Next.js frontend (GitHub OAuth, WalletConnect)"
 echo ""
 echo "2. To run the project:"
-echo "   Backend:  source venv/bin/activate && python main_agent.py"
+echo "   Backend:  cd adk-nexus && npm run server"
 echo "   Frontend: cd monorepo && npm run dev"
 echo ""
-echo "🔗 The frontend will be available at http://localhost:3000"
+echo "🔗 Frontend: http://localhost:3000"
+echo "🔗 Backend API: http://localhost:5000"

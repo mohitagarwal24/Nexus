@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-- **Node.js** (v18+ recommended, though v24 is currently installed)
-- **Python 3.8+**
+- **Node.js** (v18+ recommended)
+- **npm** or **yarn**
 - **Git**
 
 ## Quick Setup
@@ -16,17 +16,17 @@ Run the automated setup script:
 
 ## Manual Setup
 
-### 1. Python Backend Setup
+### 1. ADK-TS Backend Setup
 
 ```bash
-# Create virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
-source venv/bin/activate
+# Navigate to ADK-TS backend
+cd adk-nexus
 
 # Install dependencies
-pip install -r requirements.txt
+npm install
+
+# Build the project
+npm run build
 ```
 
 ### 2. Frontend Setup
@@ -38,18 +38,23 @@ npm install --legacy-peer-deps
 
 ## Environment Configuration
 
-### Backend (.env)
-Copy and configure the `.env` file in the root directory:
+### Backend (adk-nexus/.env)
+Copy and configure the `.env` file in the adk-nexus directory:
 
 ```bash
+# Google Gemini API Key (required for ADK-TS)
+GOOGLE_API_KEY=your_google_api_key_here
+
 # GitHub API Token (for repository integration)
 GITHUB_TOKEN=your_github_token_here
 
-# Fetch.ai Agent Configuration  
-AGENT_SEED=your_agent_seed_here
+# Server Configuration
+PORT=5000
+NODE_ENV=development
 
-# Logging Level
-LOG_LEVEL=INFO
+# Optional: Additional LLM providers
+OPENAI_API_KEY=your_openai_key_here
+ANTHROPIC_API_KEY=your_anthropic_key_here
 ```
 
 ### Frontend (monorepo/.env.local)
@@ -75,8 +80,8 @@ NEXT_PUBLIC_CONTRACT_ADDRESS=0x14553856B61C2f653Cc167E31069068AC2c3f1d0
 
 ### Start Backend (Terminal 1)
 ```bash
-source venv/bin/activate
-python main_agent.py
+cd adk-nexus
+npm run server
 ```
 
 ### Start Frontend (Terminal 2)
@@ -85,7 +90,9 @@ cd monorepo
 npm run dev
 ```
 
-The frontend will be available at: **http://localhost:3000**
+The application will be available at:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:5000
 
 ## Required API Keys & Setup
 
@@ -110,26 +117,27 @@ The frontend will be available at: **http://localhost:3000**
 ### Node.js Version Issues
 If you encounter engine compatibility warnings, they can usually be ignored. The `--legacy-peer-deps` flag resolves most dependency conflicts.
 
-### Python Dependencies
-If you encounter issues with Python packages, ensure you're using Python 3.8+ and have activated the virtual environment.
+### ADK-TS Dependencies
+If you encounter issues with the ADK-TS backend, ensure you have Node.js 18+ and all dependencies are properly installed in the adk-nexus directory.
 
 ### Port Conflicts
 - Frontend runs on port 3000
-- Backend may use various ports depending on configuration
+- ADK-TS backend runs on port 5000
 - Check for any running services on these ports
 
 ## Project Structure
 
 ```
-├── main_agent.py          # Main Python backend
-├── requirements.txt       # Python dependencies
+├── adk-nexus/            # ADK-TS backend
+│   ├── src/              # TypeScript source code
+│   ├── package.json      # Node.js dependencies
+│   └── .env              # Backend environment variables
 ├── monorepo/             # Next.js frontend
 │   ├── src/              # Frontend source code
 │   ├── package.json      # Node.js dependencies
 │   └── .env.local        # Frontend environment variables
-├── contracts/            # Smart contracts
-├── uagent/              # Agent configurations
-└── .env                 # Backend environment variables
+├── contracts/            # Smart contracts (Foundry)
+└── setup.sh             # Automated setup script
 ```
 
 ## Additional Resources

@@ -86,12 +86,12 @@ Nexus enforces fairness and transparency through:
 ## Tech Stack
 
 * **Frontend:** Next.js 14, TypeScript, TailwindCSS, Wagmi, Viem
-* **Backend:** Python FastAPI, uAgents Framework
+* **Backend:** TypeScript/Node.js with Express.js, ADK-TS Framework
 * **Blockchain:** Ethereum Sepolia testnet, Solidity Smart Contracts
 * **Smart Contract Development:** Foundry (Forge, Cast, Anvil)
-* **AI:** MCP Protocol, Multi-Agent Systems, ASI One API
+* **AI:** ADK-TS with Google Gemini, MCP Protocol, Unified Intelligence Agent
 * **Identity Layer:** Secure verification using advanced cryptographic proofs
-* **AI Agents:** Distributed verifiable agents for code analysis, PR evaluation, and trust scoring
+* **AI Agents:** Single unified intelligence agent for comprehensive repository analysis
 * **GitHub Integration:** Smart contract state continuously reconciled with GitHub issue and PR data
 
 ---
@@ -101,10 +101,10 @@ Nexus enforces fairness and transparency through:
 ### Prerequisites
 
 - Node.js 18+ and npm/yarn
-- Python 3.8+
 - MetaMask wallet
 - GitHub account
 - Sepolia ETH (get from [Sepolia Faucet](https://sepoliafaucet.com/))
+- Google Gemini API key
 
 ### 1. Clone the Repository
 
@@ -139,21 +139,23 @@ NEXT_PUBLIC_SELF_SCOPE=
 NEXT_PUBLIC_SELF_ENDPOINT=
 ```
 
-#### Backend Environment (.env)
-Create `.env` in root directory:
+#### Backend Environment (adk-nexus/.env)
+Create `.env` in adk-nexus directory:
 
 ```bash
+# Google Gemini API Key (Get from: https://makersuite.google.com/app/apikey)
+GOOGLE_API_KEY=your-google-api-key
+
 # GitHub API Token (Create at: https://github.com/settings/tokens)
 GITHUB_TOKEN=your-github-personal-access-token
 
-# Fetch.ai Agent Configuration
-AI_IDENTITY_SEED=your-agent-identity-seed
+# Server Configuration
+PORT=5000
+NODE_ENV=development
 
-# ASI One API Key (Get from: https://asi.one/)
-ASI_ONE_API_KEY=your-asi-one-api-key
-
-# Logging Configuration
-LOG_LEVEL=INFO
+# Optional: Additional LLM providers
+OPENAI_API_KEY=your-openai-api-key
+ANTHROPIC_API_KEY=your-anthropic-api-key
 ```
 
 ### 3. Install Dependencies
@@ -166,16 +168,12 @@ npm install
 
 #### Backend Setup
 ```bash
-# Install Python dependencies
-pip install -r requirements.txt
+# Install ADK-TS backend dependencies
+cd adk-nexus
+npm install
 
-# Install uAgent dependencies
-cd uagent
-pip install -r requirements.txt
-cd ..
-
-cd uagent2
-pip install -r requirements.txt
+# Build the TypeScript project
+npm run build
 cd ..
 ```
 
@@ -253,26 +251,17 @@ cd monorepo
 npm run dev
 ```
 
-#### Terminal 2: Python API Server
+#### Terminal 2: ADK-TS Backend Server
 ```bash
-python api_server.py
-```
-
-#### Terminal 3: AI Agents
-```bash
-# Start main agent
-python main_agent.py
-
-# In another terminal, start secondary agent
-cd uagent2
-python agent.py
+cd adk-nexus
+npm run server
 ```
 
 ### 7. Access the Application
 
 - **Frontend:** http://localhost:3000
-- **API Server:** http://localhost:5000
-- **Agent Dashboard:** Check console logs for agent endpoints
+- **Backend API:** http://localhost:5000
+- **API Documentation:** Available at backend endpoints
 
 ---
 
@@ -322,7 +311,8 @@ forge test
 
 ### Backend Tests
 ```bash
-python -m pytest tests/
+cd adk-nexus
+npm test
 ```
 
 ---
@@ -338,9 +328,14 @@ npm run build
 
 ### Backend Deployment
 ```bash
-# Docker deployment
-docker build -t Nexus-backend .
-docker run -p 5000:5000 Nexus-backend
+# ADK-TS backend deployment
+cd adk-nexus
+npm run build
+npm start
+
+# Or with Docker
+docker build -t nexus-adk-backend .
+docker run -p 5000:5000 nexus-adk-backend
 ```
 
 ---

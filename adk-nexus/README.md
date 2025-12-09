@@ -1,11 +1,13 @@
 # ADK-TS Nexus Repository Analyzer
 
-A powerful multi-agent repository analysis system built with ADK-TS framework, replacing the original Fetch AI and ASI implementation with modern TypeScript architecture.
+A powerful **unified intelligence agent** for comprehensive repository analysis, built with ADK-TS framework and optimized for Agent Tokenization Platform (ATP) deployment.
 
 ## 🚀 Features
 
-- **Multi-Agent Analysis**: Uses specialized AI agents for comprehensive repository analysis
+- **Unified Intelligence Agent**: Single consolidated agent performing all analysis types
 - **ADK-TS Framework**: Built on the modern ADK-TS framework with Google Gemini integration
+- **ATP Optimized**: Designed for cost-effective deployment on Agent Tokenization Platform
+- **Comprehensive Analysis**: Code analysis, security auditing, performance optimization, and feature suggestions
 - **GitHub MCP Integration**: Seamless GitHub issue creation using Model Context Protocol
 - **REST API**: Express.js server for frontend integration
 - **CLI Interface**: Interactive command-line interface for direct usage
@@ -13,16 +15,18 @@ A powerful multi-agent repository analysis system built with ADK-TS framework, r
 
 ## 🏗️ Architecture
 
-### Multi-Agent System
-- **Code Analyzer Agent**: Analyzes code structure and architecture
-- **Feature Suggester Agent**: Suggests innovative features and enhancements
-- **Security Auditor Agent**: Identifies security improvements and best practices
-- **Performance Optimizer Agent**: Recommends performance optimizations
+### Unified Intelligence System
+- **NexusIntelligenceAgent**: Single comprehensive agent that performs:
+  - Code structure and architecture analysis
+  - Security vulnerability assessment
+  - Performance bottleneck identification
+  - Feature enhancement suggestions
+  - Result synthesis and prioritization
 
 ### Analysis Flow
-1. **Discovery**: Initialize specialized analysis agents
-2. **Analysis**: Each agent analyzes the repository from their perspective
-3. **Synthesis**: Combine results using synthesis agent to select best feature
+1. **Initialization**: Initialize the unified intelligence agent
+2. **Comprehensive Analysis**: Single agent performs all analysis types in sequence
+3. **Intelligent Synthesis**: Built-in synthesis selects the best feature suggestion
 4. **GitHub Integration**: Create GitHub issues using MCP for suggested features
 
 ## 📦 Installation
@@ -112,24 +116,26 @@ GET /api/analysis-types
 
 This implementation replaces the original Python-based system with the following improvements:
 
-### Original vs ADK-TS
-| Aspect | Original (Python) | ADK-TS (TypeScript) |
-|--------|------------------|---------------------|
+### Original vs ADK-TS Nexus
+| Aspect | Original (Python) | ADK-TS Nexus (TypeScript) |
+|--------|------------------|---------------------------|
 | Framework | Fetch AI + ASI | ADK-TS + Google Gemini |
-| Agent Discovery | Agentverse API | Built-in specialized agents |
-| Agent Communication | uAgents protocol | Direct ADK-TS integration |
-| Synthesis | ASI:One API | ADK-TS synthesis agent |
+| Agent Architecture | Multiple specialized agents | Single unified intelligence agent |
+| Agent Communication | uAgents protocol | Internal unified processing |
+| Synthesis | ASI:One API | Built-in intelligent synthesis |
 | GitHub Integration | Direct API calls | MCP (Model Context Protocol) |
 | Language | Python | TypeScript |
 | Server | Flask | Express.js |
+| ATP Deployment | 5 agents (high cost) | 1 agent (cost-optimized) |
 
 ### Functional Equivalence
-- ✅ Multi-agent repository analysis
+- ✅ Comprehensive repository analysis (unified approach)
 - ✅ Feature suggestion synthesis  
 - ✅ GitHub issue creation
 - ✅ REST API for frontend integration
 - ✅ Same output format and structure
 - ✅ CLI interface compatibility
+- ✅ **ATP deployment ready** (single agent)
 
 ## 🧪 Testing
 
@@ -149,26 +155,22 @@ npm start
 ### Project Structure
 ```
 src/
-├── agents/                 # Specialized analysis agents
-│   ├── BaseAnalysisAgent.ts
-│   ├── CodeAnalyzerAgent.ts
-│   ├── FeatureSuggesterAgent.ts
-│   ├── SecurityAuditorAgent.ts
-│   └── PerformanceOptimizerAgent.ts
-├── github/                 # GitHub MCP integration
+├── github/                      # GitHub MCP integration
 │   └── GitHubMCPClient.ts
-├── NexusRepositoryAnalyzer.ts  # Main orchestrator
-├── server.ts              # Express API server
-├── index.ts               # CLI interface
-├── test.ts                # Test suite
-└── types.ts               # TypeScript definitions
+├── NexusIntelligenceAgent.ts    # Unified intelligence agent
+├── NexusRepositoryAnalyzer.ts   # Main orchestrator
+├── server.ts                    # Express API server
+├── index.ts                     # CLI interface
+├── test.ts                      # Test suite
+└── types.ts                     # TypeScript definitions
 ```
 
-### Adding New Agents
-1. Extend `BaseAnalysisAgent`
-2. Implement required abstract methods
-3. Add to `NexusRepositoryAnalyzer` agents array
-4. Update agent selection logic
+### Extending the Intelligence Agent
+The unified `NexusIntelligenceAgent` can be enhanced by:
+1. Modifying the comprehensive analysis prompt
+2. Adding new analysis dimensions to the prompt structure
+3. Updating the JSON response format
+4. Enhancing the synthesis logic
 
 ## 🌐 Frontend Integration
 
