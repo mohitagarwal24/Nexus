@@ -7,6 +7,7 @@
 - **NEW**: Removed `pnpm-lock.yaml` to prevent package manager conflicts
 - **NEW**: Added Node.js version specification (18+) for compatibility
 - **NEW**: Fixed package name to follow npm conventions
+- **LATEST**: Fixed Next.js security vulnerability (CVE-2025-66478) by upgrading to 15.4.8
 
 ## 📋 **Step-by-Step Vercel Deployment**
 
@@ -74,14 +75,21 @@ After both frontend and backend are deployed:
 - Added `.vercelignore` to prevent conflicts
 - Vercel will now use npm as specified in `vercel.json`
 
-#### **2. Node.js Version Conflicts**
+#### **2. Next.js Security Vulnerability**
+**Error**: `Vulnerable version of Next.js detected, please update immediately. Learn More: https://vercel.link/CVE-2025-66478`
+**Solution**:
+- Updated Next.js from 15.5.4 to 15.4.8 (patched version)
+- Avoided Next.js 16.x due to breaking changes with dependencies
+- Build now passes without security warnings
+
+#### **3. Node.js Version Conflicts**
 **Error**: `Unsupported engine { package: '@selfxyz/common@0.0.9', required: { node: '>=22 <23' }`
 **Solution**:
 - Added `engines` field in `package.json` specifying Node 18+
 - Added `.nvmrc` file for explicit version control
 - Vercel will use compatible Node.js version
 
-#### **3. Other Common Issues**
+#### **4. Other Common Issues**
 1. **Build Fails**: Check that Root Directory is set to `frontend`
 2. **Environment Variables**: Set them in Vercel Dashboard, not in code
 3. **OAuth Errors**: Ensure callback URLs match exactly
