@@ -540,7 +540,7 @@ export default function CreateIssuePage() {
     setIsAnalyzing(true);
     try {
       const repoUrl = `https://github.com/${selectedRepo}`;
-      const response = await fetch('http://localhost:5000/api/analyze-repo', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/analyze-repo`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -562,7 +562,7 @@ export default function CreateIssuePage() {
       }
     } catch (error) {
       console.error('Error analyzing repository:', error);
-      alert('Error connecting to analysis service. Make sure the service is running on localhost:5000');
+      alert('Error connecting to analysis service. Please check if the backend service is available.');
     } finally {
       setIsAnalyzing(false);
     }

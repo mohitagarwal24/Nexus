@@ -51,3 +51,20 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+
+# Deployment and setup files (generated)
+*.production.template
+deploy-setup.sh
+setup.sh
+commands.txt
+
+# Duplicate contract ABIs (use contracts/out/ instead)
+frontend/*.json
+!frontend/package.json
+!frontend/tsconfig.json
+!frontend/components.json
+!frontend/vercel.json
+
+# Temporary files
+*.bak
+*.backup
