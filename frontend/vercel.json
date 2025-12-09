@@ -17,5 +17,20 @@
             "source": "/api/create-github-issue",
             "destination": "$NEXT_PUBLIC_API_URL/api/create-github-issue"
         }
+    ],
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                },
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                }
+            ]
+        }
     ]
 }

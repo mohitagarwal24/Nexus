@@ -1,9 +1,20 @@
-import { auth } from "@/auth"
+import { NextRequest, NextResponse } from 'next/server'
 
-export default auth((req) => {
-  // Add any middleware logic here if needed
-})
+export function middleware(request: NextRequest) {
+  // Simple middleware that just passes through
+  // NextAuth will handle authentication in the app
+  return NextResponse.next()
+}
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 }
