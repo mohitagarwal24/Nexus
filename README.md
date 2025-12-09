@@ -2,11 +2,13 @@
 
 ![Nexus Architecture]<img width="1496" height="658" alt="image" src="https://github.com/user-attachments/assets/1cf17294-5d53-4d87-aa74-53421c28ddbf" />
 
-**Demo / Video:** *https://youtu.be/K63IxGqn9iA*
+**Frontend:** *https://nexus-psi-sable.vercel.app/*
+
+**Backend:** *https://nexus-fgqs.onrender.com/*
+
+**Demo Video:** *https://youtu.be/siqbVogL6H8*
 
 **Contract Deployment:** *Ethereum Sepolia Testnet - 0xC381B1dd37B82810356EdD61Cb584e3228457aC7* 
-
-**Pitch Deck:** *https://docs.google.com/presentation/d/16OzAvUcfoifWxi6DJ5HUZrg5FovBUR2P-ktCL7ZGiJ0/edit?usp=sharing*
 
 ---
 
