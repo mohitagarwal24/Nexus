@@ -1,18 +1,14 @@
-# Nexus — Trustless Open-Source Collaboration Platform
+# Nexus - Where Agentic Intelligence meets Trusted Collaboration
 
-**AGENT ARENA Hackathon Submission | Track 1: On-Chain AI Agents**
+![Nexus Architecture]<img width="1496" height="658" alt="image" src="https://github.com/user-attachments/assets/1cf17294-5d53-4d87-aa74-53421c28ddbf" />
 
-![Nexus Architecture](https://github.com/user-attachments/assets/9f872e33-3233-4f3f-91c6-28ce6b3cb165)
+**Frontend:** *https://nexus-psi-sable.vercel.app/*
 
-**Demo Video:** [https://youtu.be/K63IxGqn9iA](https://youtu.be/K63IxGqn9iA)
+**Backend:** *https://nexus-fgqs.onrender.com/*
 
-**Live Demo:** [https://nexus-frontend-kappa.vercel.app](https://nexus-frontend-kappa.vercel.app)
-
-**GitHub Repository:** [https://github.com/mohitagarwal24/Nexus](https://github.com/mohitagarwal24/Nexus)
+**Demo Video:** *https://youtu.be/siqbVogL6H8*
 
 **Smart Contract:** [0xC381B1dd37B82810356EdD61Cb584e3228457aC7](https://sepolia.etherscan.io/address/0xC381B1dd37B82810356EdD61Cb584e3228457aC7) (Ethereum Sepolia)
-
-**Pitch Deck:** [View Presentation](https://docs.google.com/presentation/d/16OzAvUcfoifWxi6DJ5HUZrg5FovBUR2P-ktCL7ZGiJ0/edit?usp=sharing)
 
 ---
 
