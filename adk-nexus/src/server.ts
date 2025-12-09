@@ -3,7 +3,7 @@
  * Provides REST endpoints for frontend integration
  */
 
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { NexusRepositoryAnalyzer } from './NexusRepositoryAnalyzer.js';
@@ -64,7 +64,7 @@ async function initializeAnalyzer(): Promise<boolean> {
 /**
  * Health check endpoint
  */
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
     res.json({
         status: 'healthy',
         service: 'ADK-TS Nexus Repository Analysis API',
@@ -78,7 +78,7 @@ app.get('/health', (req, res) => {
  * POST /api/analyze-repo
  * Body: { "repoUrl": "https://github.com/owner/repo", "analysisType": "full" }
  */
-app.post('/api/analyze-repo', async (req, res) => {
+app.post('/api/analyze-repo', async (req: Request, res: Response) => {
     try {
         console.log('📥 API: Received repository analysis request');
         console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
@@ -199,7 +199,7 @@ app.post('/api/analyze-repo', async (req, res) => {
  * POST /api/create-github-issue
  * Body: { "owner": "owner", "repo": "repo", "issueData": {...} }
  */
-app.post('/api/create-github-issue', async (req, res) => {
+app.post('/api/create-github-issue', async (req: Request, res: Response) => {
     try {
         const { owner, repo, issueData } = req.body;
 
@@ -247,7 +247,7 @@ app.post('/api/create-github-issue', async (req, res) => {
 /**
  * Get available analysis types
  */
-app.get('/api/analysis-types', (req, res) => {
+app.get('/api/analysis-types', (req: Request, res: Response) => {
     res.json({
         success: true,
         analysisTypes: [
@@ -287,7 +287,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 /**
  * 404 handler - catch all unmatched routes
  */
-app.use((req, res) => {
+app.use((req: Request, res: Response) => {
     res.status(404).json({
         success: false,
         error: 'Endpoint not found'
