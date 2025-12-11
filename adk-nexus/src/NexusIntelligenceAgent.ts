@@ -28,7 +28,7 @@ export class NexusIntelligenceAgent {
 
         try {
             const { runner } = await AgentBuilder.create('NexusIntelligenceAgent')
-                .withModel('gemini-2.5-flash')
+                .withModel('gemini-2.5-flash-lite')
                 .withDescription('Comprehensive repository intelligence agent that performs code analysis, security auditing, performance optimization, and feature suggestion in a single unified analysis')
                 .build();
 
