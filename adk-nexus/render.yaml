@@ -3,6 +3,7 @@ services:
     name: nexus-backend
     env: node
     plan: starter
+    runtime: node22
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:

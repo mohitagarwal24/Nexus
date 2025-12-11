@@ -20,6 +20,9 @@
   ],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
     "@iqai/adk": "^0.5.7",
     "@types/cors": "^2.8.19",
