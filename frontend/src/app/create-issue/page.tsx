@@ -87,13 +87,6 @@ enum Difficulty {
   HARD = 2
 }
 
-let sessionId = localStorage.getItem("session_id") ?? undefined;
-
-if (!sessionId) {
-  sessionId = crypto.randomUUID();
-  localStorage.setItem("session_id", sessionId);
-}
-
 const DIFFICULTY_CONFIG = {
   [Difficulty.EASY]: {
     label: "Easy",
@@ -119,6 +112,7 @@ export default function CreateIssuePage() {
   const { data: session } = useSession();
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined);
 
   // State management
   const [githubIssues, setGithubIssues] = useState<GitHubIssue[]>([]);
@@ -141,6 +135,17 @@ export default function CreateIssuePage() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let sessionId = localStorage.getItem("session_id") ?? undefined;
+
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      localStorage.setItem("session_id", sessionId);
+    }
+
+    setSessionId(sessionId); // store it in state
   }, []);
 
   // Check token scopes on mount (only when accessToken changes)
@@ -542,6 +547,8 @@ export default function CreateIssuePage() {
       alert('Please select a repository first');
       return;
     }
+
+    if (!sessionId) return;
 
     setIsAnalyzing(true);
     try {
