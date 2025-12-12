@@ -9,6 +9,7 @@ import dotenv from 'dotenv';
 import { NexusRepositoryAnalyzer } from './NexusRepositoryAnalyzer.js';
 import { GitHubMCPClient } from './github/GitHubMCPClient.js';
 import type { RepositoryAnalysisRequest } from './types.js';
+import { apiKeyGuard, concurrencyGuard } from './securitymiddleware.js';
 
 // Load environment variables
 dotenv.config();
@@ -52,7 +53,7 @@ const corsOptions = {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'x-session-id']
 };
 
 app.use(cors(corsOptions));
@@ -101,7 +102,7 @@ app.get('/health', (req: Request, res: Response) => {
  * POST /api/analyze-repo
  * Body: { "repoUrl": "https://github.com/owner/repo", "analysisType": "full" }
  */
-app.post('/api/analyze-repo', async (req: Request, res: Response) => {
+app.post('/api/analyze-repo', apiKeyGuard, concurrencyGuard, async (req: Request, res: Response) => {
     try {
         console.log('📥 API: Received repository analysis request');
         console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
@@ -222,7 +223,7 @@ app.post('/api/analyze-repo', async (req: Request, res: Response) => {
  * POST /api/create-github-issue
  * Body: { "owner": "owner", "repo": "repo", "issueData": {...} }
  */
-app.post('/api/create-github-issue', async (req: Request, res: Response) => {
+app.post('/api/create-github-issue', apiKeyGuard, concurrencyGuard, async (req: Request, res: Response) => {
     try {
         const { owner, repo, issueData } = req.body;
 

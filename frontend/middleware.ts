@@ -1,20 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
-  // Simple middleware that just passes through
-  // NextAuth will handle authentication in the app
-  return NextResponse.next()
+export function middleware(req: NextRequest) {
+  const ua = req.headers.get("user-agent") || "";
+
+  // Block empty user-agents and known bot patterns
+  const botPatterns = ["bot", "crawler", "spider", "curl", "python", "scraper"];
+  const isBot = botPatterns.some((b) => ua.toLowerCase().includes(b));
+
+  if (!ua || isBot) {
+    return new NextResponse("Blocked", { status: 403 });
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
-}
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+};
