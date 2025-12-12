@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { parseEther, formatEther } from "viem";
-
 // Utility function to format Ether with proper precision
 const formatEtherWithPrecision = (value: bigint, decimals: number = 4): string => {
   const formatted = formatEther(value);
@@ -86,6 +85,13 @@ enum Difficulty {
   EASY = 0,
   MEDIUM = 1,
   HARD = 2
+}
+
+let sessionId = localStorage.getItem("session_id") ?? undefined;
+
+if (!sessionId) {
+  sessionId = crypto.randomUUID();
+  localStorage.setItem("session_id", sessionId);
 }
 
 const DIFFICULTY_CONFIG = {
@@ -540,15 +546,19 @@ export default function CreateIssuePage() {
     setIsAnalyzing(true);
     try {
       const repoUrl = `https://github.com/${selectedRepo}`;
-      const response = await fetch('/api/analyze-repo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          repo_url: repoUrl
-        }),
-      });
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.NEXT_PUBLIC_BACKEND_KEY!,
+        "x-session-id": sessionId!,
+      };
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_BACKEND_URL + "/api/analyze-repo",
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ repo_url: repoUrl }),
+        }
+      );
 
       if (response.ok) {
         const result: AnalysisResult = await response.json();
