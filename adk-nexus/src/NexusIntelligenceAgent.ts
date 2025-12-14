@@ -104,8 +104,12 @@ export class NexusIntelligenceAgent {
         const analysisPrompt = this.buildComprehensiveAnalysisPrompt(repository, analysisType);
 
         try {
+            console.log('🤖 Calling Gemini API for analysis...');
             const analysisResponse = await this.agent.ask(analysisPrompt);
+            console.log('✅ Gemini API response received');
+            
             const parsedResult = this.parseAnalysisResponse(analysisResponse);
+            console.log('✅ Analysis parsed successfully');
 
             return {
                 repository: repository.url,
@@ -117,17 +121,9 @@ export class NexusIntelligenceAgent {
             };
 
         } catch (error) {
-            console.warn('⚠️ Analysis failed, using fallback');
-            const fallbackFeature = this.createFallbackFeature(repository);
-
-            return {
-                repository: repository.url,
-                analysisMethod: 'ADK-TS Unified Intelligence Analysis (Fallback)',
-                agentsUsed: ['NexusIntelligenceAgent'],
-                agentsDiscovered: 1,
-                selectedFeature: fallbackFeature,
-                githubIssueData: this.createGitHubIssuePayload(fallbackFeature)
-            };
+            console.error('❌ Analysis failed:', error);
+            // Don't return fallback - throw error so user knows API failed
+            throw new Error(`AI analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please check API quota or try again later.`);
         }
     }
 

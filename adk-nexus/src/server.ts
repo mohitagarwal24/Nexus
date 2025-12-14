@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 import { NexusRepositoryAnalyzer } from './NexusRepositoryAnalyzer.js';
 import { GitHubMCPClient } from './github/GitHubMCPClient.js';
 import type { RepositoryAnalysisRequest } from './types.js';
-import { apiKeyGuard, concurrencyGuard } from './securitymiddleware.js';
+import { apiKeyGuard, concurrencyGuard, rateLimitGuard, botGuard, captchaGuard } from './securitymiddleware.js';
 
 // Load environment variables
 dotenv.config();
@@ -60,9 +60,50 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Apply global security middleware (rate limiting + bot detection)
+app.use(rateLimitGuard);
+app.use(botGuard);
+
 // Global instances
 let analyzer: NexusRepositoryAnalyzer | null = null;
 let githubClient: GitHubMCPClient | null = null;
+
+// Circuit breaker for Gemini API
+let geminiApiFailures = 0;
+let geminiApiBlocked = false;
+let geminiApiBlockedUntil = 0;
+const MAX_GEMINI_FAILURES = 3;
+const GEMINI_BLOCK_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function checkGeminiCircuitBreaker(): boolean {
+    const now = Date.now();
+
+    // Reset if block period expired
+    if (geminiApiBlocked && now > geminiApiBlockedUntil) {
+        console.log('✅ Gemini API circuit breaker reset');
+        geminiApiBlocked = false;
+        geminiApiFailures = 0;
+    }
+
+    return !geminiApiBlocked;
+}
+
+function recordGeminiFailure() {
+    geminiApiFailures++;
+    console.warn(`⚠️ Gemini API failure ${geminiApiFailures}/${MAX_GEMINI_FAILURES}`);
+
+    if (geminiApiFailures >= MAX_GEMINI_FAILURES) {
+        geminiApiBlocked = true;
+        geminiApiBlockedUntil = Date.now() + GEMINI_BLOCK_DURATION;
+        console.error(`🚫 Gemini API circuit breaker OPEN - blocked for ${GEMINI_BLOCK_DURATION / 1000}s`);
+    }
+}
+
+function recordGeminiSuccess() {
+    if (geminiApiFailures > 0) {
+        geminiApiFailures = Math.max(0, geminiApiFailures - 1);
+    }
+}
 
 /**
  * Initialize the analyzer
@@ -102,8 +143,27 @@ app.get('/health', (req: Request, res: Response) => {
  * POST /api/analyze-repo
  * Body: { "repoUrl": "https://github.com/owner/repo", "analysisType": "full" }
  */
-app.post('/api/analyze-repo', apiKeyGuard, concurrencyGuard, async (req: Request, res: Response) => {
+app.post('/api/analyze-repo', apiKeyGuard, captchaGuard, concurrencyGuard, async (req: Request, res: Response) => {
     try {
+        // KILL SWITCH: Check if analysis is enabled (emergency shutdown capability)
+        if (process.env.ENABLE_ANALYSIS === 'false') {
+            console.warn('🚫 Analysis endpoint disabled via ENABLE_ANALYSIS environment variable');
+            return res.status(503).json({
+                success: false,
+                error: 'Repository analysis is temporarily disabled for maintenance. Please try again later.'
+            });
+        }
+
+        // Check circuit breaker FIRST
+        if (!checkGeminiCircuitBreaker()) {
+            const waitTime = Math.ceil((geminiApiBlockedUntil - Date.now()) / 1000);
+            console.error(`🚫 Request rejected: Gemini API circuit breaker is OPEN (wait ${waitTime}s)`);
+            return res.status(503).json({
+                success: false,
+                error: `Service temporarily unavailable due to API quota limits. Please try again in ${waitTime} seconds.`
+            });
+        }
+
         console.log('📥 API: Received repository analysis request');
         console.log('📋 Request body:', JSON.stringify(req.body, null, 2));
 
@@ -172,6 +232,7 @@ app.post('/api/analyze-repo', apiKeyGuard, concurrencyGuard, async (req: Request
         const result = await analyzer.analyzeRepository(request);
 
         if (result.success) {
+            recordGeminiSuccess(); // Record success
             console.log(`✅ API: Analysis completed for ${repoUrl}`);
 
             // Transform response to match frontend expected format (snake_case)
@@ -202,6 +263,11 @@ app.post('/api/analyze-repo', apiKeyGuard, concurrencyGuard, async (req: Request
 
             return res.json(frontendResponse);
         } else {
+            // Check if it's a Gemini API error
+            if (result.error?.includes('quota') || result.error?.includes('429') || result.error?.includes('rate limit')) {
+                recordGeminiFailure();
+            }
+
             console.error(`❌ API: Analysis failed for ${repoUrl}:`, result.error);
             return res.status(500).json({
                 success: false,
@@ -210,10 +276,16 @@ app.post('/api/analyze-repo', apiKeyGuard, concurrencyGuard, async (req: Request
         }
 
     } catch (error) {
+        // Check if it's a Gemini API error
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        if (errorMsg.includes('quota') || errorMsg.includes('429') || errorMsg.includes('rate limit')) {
+            recordGeminiFailure();
+        }
+
         console.error('❌ API: Unexpected error in analyze-repo:', error);
         return res.status(500).json({
             success: false,
-            error: `Internal server error: ${error instanceof Error ? error.message : 'Unknown error'}`
+            error: `Internal server error: ${errorMsg}`
         });
     }
 });

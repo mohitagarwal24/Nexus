@@ -1,4 +1,4 @@
-# Use Node.js 22 Alpine for compatibility with dependencies
+# Railway Dockerfile - Build from monorepo root
 FROM node:22-alpine
 
 # Install curl for healthchecks
@@ -7,27 +7,26 @@ RUN apk add --no-cache curl
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-
-# Install all dependencies (including dev deps for build)
-RUN npm ci
-
-# Copy source code
+# Copy entire repo first (Railway needs this)
 COPY . .
+
+# Navigate to adk-nexus and install
+WORKDIR /app/adk-nexus
+RUN npm ci
 
 # Build the application
 RUN npm run build
 
-# Remove dev dependencies after build
+# Remove dev dependencies
 RUN npm prune --production
 
-# Expose port (Railway will set PORT env var)
+# Expose port
 EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -f http://localhost:${PORT:-5000}/health || exit 1
 
-# Start the application
-CMD ["npm", "start"]
+# Start with memory limit
+CMD ["node", "--max-old-space-size=512", "dist/server.js"]
+

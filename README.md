@@ -2,11 +2,13 @@
 
 ![Nexus Architecture]<img width="1496" height="658" alt="image" src="https://github.com/user-attachments/assets/1cf17294-5d53-4d87-aa74-53421c28ddbf" />
 
-**Frontend:** *https://nexus-psi-sable.vercel.app/*
+**Frontend:** *https://nexus-five-weld.vercel.app/*
 
-**Backend:** *https://nexus-fgqs.onrender.com/*
+**Backend:** *https://nexus-production-b793.up.railway.app/*
 
 **Demo Video:** *https://youtu.be/siqbVogL6H8*
+
+**Launched Agent on ATP:** *https://app.iqai.com/pending/0x8e2C89a75BfE042Bf92dE4665B79D633100BEb60*
 
 **Smart Contract:** [0xC381B1dd37B82810356EdD61Cb584e3228457aC7](https://sepolia.etherscan.io/address/0xC381B1dd37B82810356EdD61Cb584e3228457aC7) (Ethereum Sepolia)
 

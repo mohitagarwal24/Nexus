@@ -1,4 +1,31 @@
+# Block ALL bots to prevent Edge request quota exhaustion
 User-agent: *
-Allow: /
+Disallow: /
 
-Sitemap: https://nexus-psi-sable.vercel.app//sitemap.xml
+# Explicitly block common aggressive crawlers
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /

@@ -1,0 +1,12 @@
+[phases.setup]
+nixPkgs = ["nodejs-22_x", "curl"]
+
+[phases.install]
+cmds = ["cd adk-nexus && npm ci"]
+
+[phases.build]
+cmds = ["cd adk-nexus && npm run build"]
+
+[start]
+cmd = "cd adk-nexus && node --max-old-space-size=512 dist/server.js"
+

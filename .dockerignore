@@ -1,0 +1,23 @@
+# Ignore git files
+.git
+.gitmodules
+
+# Ignore other project directories (not needed for backend)
+frontend/
+contracts/
+
+# Ignore markdown files at root
+/*.md
+
+# Ignore node_modules in ALL directories (will be reinstalled)
+**/node_modules/
+**/dist/
+
+# Ignore env files (will be provided by Railway)
+**/.env
+**/.env.*
+!**/.env.example
+
+# Ignore logs
+**/*.log
+**/npm-debug.log*

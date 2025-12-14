@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
@@ -133,6 +133,13 @@ export default function CreateIssuePage() {
   const [approvingIssue, setApprovingIssue] = useState(false);
   const [hasRepoScope, setHasRepoScope] = useState<boolean | null>(null);
 
+  // CAPTCHA states
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaLoaded, setCaptchaLoaded] = useState(false);
+  const [showCaptchaModal, setShowCaptchaModal] = useState(false);
+  const turnstileRef = useRef<string | null>(null);
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -174,6 +181,78 @@ export default function CreateIssuePage() {
 
     checkTokenScopes();
   }, [session?.accessToken, hasRepoScope]); // Only run when accessToken changes or hasRepoScope is null
+
+  // Setup Turnstile callback
+  useEffect(() => {
+    console.log('🔧 Setting up Turnstile callback');
+    console.log('🔍 Window.turnstile available?', !!(window as any).turnstile);
+
+    // Define global callback for Turnstile
+    (window as any).onTurnstileSuccess = (token: string) => {
+      console.log('✅ CAPTCHA verified, token received:', token.substring(0, 20) + '...');
+      setCaptchaToken(token);
+      setShowCaptchaModal(false); // Close modal on success
+    };
+
+    // Check if Turnstile script loaded
+    const checkTurnstile = setInterval(() => {
+      if ((window as any).turnstile) {
+        console.log('✅ Turnstile script loaded successfully');
+        setCaptchaLoaded(true);
+        clearInterval(checkTurnstile);
+      }
+    }, 500);
+
+    return () => {
+      clearInterval(checkTurnstile);
+      delete (window as any).onTurnstileSuccess;
+    };
+  }, []);
+
+  // Render Turnstile widget when modal opens
+  useEffect(() => {
+    if (showCaptchaModal && captchaLoaded && captchaContainerRef.current && (window as any).turnstile) {
+      const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+      if (siteKey && !turnstileRef.current) {
+        console.log('🎨 Rendering Turnstile widget in modal');
+
+        try {
+          const widgetId = (window as any).turnstile.render(captchaContainerRef.current, {
+            sitekey: siteKey,
+            callback: (token: string) => {
+              console.log('✅ CAPTCHA verified via widget callback');
+              setCaptchaToken(token);
+              setShowCaptchaModal(false);
+            },
+            'error-callback': () => {
+              console.error('❌ CAPTCHA error');
+            },
+            theme: 'dark',
+            size: 'normal',
+          });
+
+          turnstileRef.current = widgetId;
+          console.log('✅ Widget rendered with ID:', widgetId);
+        } catch (error) {
+          console.error('❌ Failed to render Turnstile widget:', error);
+        }
+      }
+    }
+
+    // Cleanup widget when modal closes
+    return () => {
+      if (!showCaptchaModal && turnstileRef.current && (window as any).turnstile) {
+        console.log('🧹 Cleaning up Turnstile widget');
+        try {
+          (window as any).turnstile.remove(turnstileRef.current);
+        } catch (e) {
+          console.warn('Failed to remove widget:', e);
+        }
+        turnstileRef.current = null;
+      }
+    };
+  }, [showCaptchaModal, captchaLoaded]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -550,6 +629,14 @@ export default function CreateIssuePage() {
 
     if (!sessionId) return;
 
+    // CAPTCHA validation - show modal if needed
+    const captchaRequired = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+    if (captchaRequired && !captchaToken) {
+      setShowCaptchaModal(true);
+      return;
+    }
+
+    // Proceed with analysis
     setIsAnalyzing(true);
     try {
       const repoUrl = `https://github.com/${selectedRepo}`;
@@ -558,8 +645,13 @@ export default function CreateIssuePage() {
         "x-api-key": process.env.NEXT_PUBLIC_BACKEND_KEY!,
         "x-session-id": sessionId!,
       };
+
+      // Add CAPTCHA token if available
+      if (captchaToken) {
+        headers["x-captcha-token"] = captchaToken;
+      }
       const response = await fetch(
-        process.env.NEXT_PUBLIC_BACKEND_URL + "/api/analyze-repo",
+        "/api/analyze-repo",
         {
           method: "POST",
           headers,
@@ -573,13 +665,32 @@ export default function CreateIssuePage() {
         setAnalysisResult(result);
         setShowSuggestion(true);
         alert('✅ Analysis complete! Check the AI Suggested Issue section below.');
+
+        // Reset CAPTCHA after successful analysis
+        setCaptchaToken(null);
+        if (window.turnstile && turnstileRef.current) {
+          window.turnstile.reset(turnstileRef.current);
+        }
       } else {
         console.error('Analysis failed:', response.statusText);
-        alert('Analysis failed. Please try again.');
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        alert(`Analysis failed: ${errorData.error || response.statusText}`);
+
+        // Reset CAPTCHA on failure too
+        setCaptchaToken(null);
+        if (window.turnstile && turnstileRef.current) {
+          window.turnstile.reset(turnstileRef.current);
+        }
       }
     } catch (error) {
       console.error('Error analyzing repository:', error);
       alert('Error connecting to analysis service. Please check if the backend service is available.');
+
+      // Reset CAPTCHA on error
+      setCaptchaToken(null);
+      if (window.turnstile && turnstileRef.current) {
+        window.turnstile.reset(turnstileRef.current);
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -836,562 +947,637 @@ export default function CreateIssuePage() {
   }
 
   return (
-    <div
-      className="min-h-screen bg-black font-upheaval relative"
-      style={{
-        backgroundImage: "url('/background.webp')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "repeat",
-        backgroundAttachment: "scroll"
-      }}
-    >
-      {/* Background overlays */}
-      <div className="absolute inset-0 bg-black/30 z-0"></div>
-      <div className="absolute inset-0 opacity-40 z-0"
+    <>
+      <div
+        className="min-h-screen bg-black font-upheaval relative"
         style={{
-          backgroundImage: `
+          backgroundImage: "url('/background.webp')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "repeat",
+          backgroundAttachment: "scroll"
+        }}
+      >
+        {/* Background overlays */}
+        <div className="absolute inset-0 bg-black/30 z-0"></div>
+        <div className="absolute inset-0 opacity-40 z-0"
+          style={{
+            backgroundImage: `
                linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
                linear-gradient(90deg, rgba(34, 197, 94, 0.3) 1px, transparent 1px)
              `,
-          backgroundSize: '40px 40px'
-        }}>
-      </div>
+            backgroundSize: '40px 40px'
+          }}>
+        </div>
 
-      {/* Header */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-          <div>
-            <h1 className="text-4xl md:text-6xl font-bold text-green-400 uppercase tracking-wider mb-2">ISSUE MANAGEMENT</h1>
-            <p className="text-lg text-green-100 max-w-2xl">
-              Create blockchain-backed issues with bounties and manage your repository&apos;s workflow
-            </p>
-          </div>
-
-          <div className="flex gap-4">
-            {/* Repository Selector */}
-            <div className="flex flex-col">
-              <select
-                value={selectedRepo}
-                onChange={(e) => setSelectedRepo(e.target.value)}
-                onClick={handleRepositoryDropdownClick}
-                onFocus={handleRepositoryDropdownClick}
-                className="px-4 py-2 border-2 border-green-400 bg-black/80 text-green-400 font-bold font-upheaval uppercase tracking-wider hover:border-green-300 focus:border-green-300 transition-colors duration-300"
-                disabled={repositoriesLoading || (repositories.length === 0 && repositoriesLoaded)}
-              >
-                <option value="">
-                  {repositoriesLoading ? "LOADING REPOSITORIES..." :
-                    !repositoriesLoaded ? "CLICK TO LOAD REPOSITORIES..." :
-                      repositories.length === 0 ? "NO REPOSITORIES FOUND" : "SELECT REPOSITORY"}
-                </option>
-                {repositories.map((repo) => (
-                  <option key={repo.id} value={repo.full_name}>
-                    {repo.full_name.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-green-100 mt-1 opacity-75 font-upheaval">
-                {repositoriesLoading
-                  ? "FETCHING YOUR REPOSITORIES FROM GITHUB..."
-                  : !repositoriesLoaded
-                    ? "CLICK DROPDOWN TO LOAD YOUR REPOSITORIES"
-                    : repositories.length === 0
-                      ? "YOU NEED REPOSITORIES WITH WRITE ACCESS TO CREATE ISSUES"
-                      : "ONLY SHOWING REPOSITORIES WHERE YOU CAN CREATE ISSUES"
-                }
+        {/* Header */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+            <div>
+              <h1 className="text-4xl md:text-6xl font-bold text-green-400 uppercase tracking-wider mb-2">ISSUE MANAGEMENT</h1>
+              <p className="text-lg text-green-100 max-w-2xl">
+                Create blockchain-backed issues with bounties and manage your repository&apos;s workflow
               </p>
             </div>
 
-            <Button
-              onClick={analyzeRepository}
-              disabled={!selectedRepo || isAnalyzing || hasRepoScope === false}
-              className="bg-green-400/20 text-green-400 px-6 py-3 border-2 border-green-400 font-bold font-upheaval uppercase tracking-wider hover:bg-green-400 hover:text-black transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isAnalyzing ? (
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              ) : (
-                <Zap className="w-5 h-5 mr-2" />
-              )}
-              {isAnalyzing ? 'ANALYZING...' : 'AI ANALYZE REPO'}
-            </Button>
+            <div className="flex gap-4">
+              {/* Repository Selector */}
+              <div className="flex flex-col">
+                <select
+                  value={selectedRepo}
+                  onChange={(e) => setSelectedRepo(e.target.value)}
+                  onClick={handleRepositoryDropdownClick}
+                  onFocus={handleRepositoryDropdownClick}
+                  className="px-4 py-2 border-2 border-green-400 bg-black/80 text-green-400 font-bold font-upheaval uppercase tracking-wider hover:border-green-300 focus:border-green-300 transition-colors duration-300"
+                  disabled={repositoriesLoading || (repositories.length === 0 && repositoriesLoaded)}
+                >
+                  <option value="">
+                    {repositoriesLoading ? "LOADING REPOSITORIES..." :
+                      !repositoriesLoaded ? "CLICK TO LOAD REPOSITORIES..." :
+                        repositories.length === 0 ? "NO REPOSITORIES FOUND" : "SELECT REPOSITORY"}
+                  </option>
+                  {repositories.map((repo) => (
+                    <option key={repo.id} value={repo.full_name}>
+                      {repo.full_name.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-green-100 mt-1 opacity-75 font-upheaval">
+                  {repositoriesLoading
+                    ? "FETCHING YOUR REPOSITORIES FROM GITHUB..."
+                    : !repositoriesLoaded
+                      ? "CLICK DROPDOWN TO LOAD YOUR REPOSITORIES"
+                      : repositories.length === 0
+                        ? "YOU NEED REPOSITORIES WITH WRITE ACCESS TO CREATE ISSUES"
+                        : "ONLY SHOWING REPOSITORIES WHERE YOU CAN CREATE ISSUES"
+                  }
+                </p>
+              </div>
 
-            <Button
-              onClick={() => setShowCreateForm(true)}
-              disabled={hasRepoScope === false}
-              className="bg-green-400 text-black px-6 py-3 border-2 border-green-400 font-bold font-upheaval uppercase tracking-wider hover:bg-green-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              CREATE NEW ISSUE
-            </Button>
+              <Button
+                onClick={analyzeRepository}
+                disabled={!selectedRepo || isAnalyzing || hasRepoScope === false}
+                className="bg-green-400/20 text-green-400 px-6 py-3 border-2 border-green-400 font-bold font-upheaval uppercase tracking-wider hover:bg-green-400 hover:text-black transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isAnalyzing ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <Zap className="w-5 h-5 mr-2" />
+                )}
+                {isAnalyzing ? 'ANALYZING...' : 'AI ANALYZE REPO'}
+              </Button>
+
+              {!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                <p className="text-yellow-400 font-mono text-xs mt-2 text-center">
+                  ⚠️ CAPTCHA not configured - Bot protection disabled
+                </p>
+              )}
+
+              <Button
+                onClick={() => setShowCreateForm(true)}
+                disabled={hasRepoScope === false}
+                className="bg-green-400 text-black px-6 py-3 border-2 border-green-400 font-bold font-upheaval uppercase tracking-wider hover:bg-green-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                CREATE NEW ISSUE
+              </Button>
+            </div>
           </div>
+
+          {/* Account Verification Section */}
+          {!isVerified && (
+            <div className="bg-yellow-500/20 border-2 border-yellow-400 p-6 mb-8 backdrop-blur-sm">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="text-yellow-400 font-bold text-lg mb-2 font-upheaval uppercase">Account Verification Required</h3>
+                  <p className="text-yellow-100 mb-4">
+                    You need to verify your account before creating bounties. This helps prevent spam and ensures platform security.
+                  </p>
+                  <Button
+                    onClick={handleVerification}
+                    disabled={isVerifying || isContractLoading || isTransactionLoading}
+                    className="bg-yellow-400 text-black px-6 py-2 border-2 border-yellow-400 font-bold font-upheaval uppercase tracking-wider hover:bg-yellow-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {(isVerifying || isContractLoading || isTransactionLoading) ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                    )}
+                    {(isVerifying || isContractLoading || isTransactionLoading) ? 'VERIFYING...' : 'VERIFY ACCOUNT'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Account Verified Success */}
+          {isVerified && (
+            <div className="bg-green-500/20 border-2 border-green-400 p-4 mb-8 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-green-400" />
+                <span className="text-green-400 font-bold font-upheaval uppercase">Account Verified ✓</span>
+              </div>
+            </div>
+          )}
+
+          {/* Token Scope Warning */}
+          {hasRepoScope === false && (
+            <div className="bg-red-500/20 border-2 border-red-400 p-6 mb-8 backdrop-blur-sm">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
+                <div>
+                  <h3 className="text-xl font-bold text-red-400 mb-2 font-upheaval uppercase">⚠️ GITHUB PERMISSIONS REQUIRED</h3>
+                  <p className="text-red-100 mb-4">
+                    Your GitHub token doesn&apos;t have the required permissions to create issues.
+                    The app needs &quot;repo&quot; scope to create issues and manage labels.
+                  </p>
+                  <div className="bg-black/40 border-2 border-red-400/50 p-4 mb-4 backdrop-blur-sm">
+                    <p className="text-red-100 mb-2 font-upheaval"><strong>CURRENT SCOPES:</strong> read:user, user:email</p>
+                    <p className="text-red-100 font-upheaval"><strong>REQUIRED SCOPES:</strong> read:user, user:email, repo</p>
+                  </div>
+                  <p className="text-red-100 font-upheaval">
+                    <strong>TO FIX THIS:</strong> Sign out from GitHub in the navbar above, then sign back in.
+                    The app will request the updated permissions automatically.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AI Suggestion Section */}
+          {showSuggestion && analysisResult && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-upheaval text-green-400 italic">AI SUGGESTED ISSUE</h2>
+                <Button
+                  onClick={() => setShowSuggestion(false)}
+                  className="bg-black text-green-400 px-4 py-2 border border-green-400 font-mono hover:bg-green-400 hover:text-black transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Analysis Summary */}
+              <div className="bg-black/80 border border-green-400 p-6 mb-6 backdrop-blur-sm">
+                <h3 className="text-xl font-upheaval text-green-400 mb-2">AI ANALYSIS REPORT</h3>
+                <p className="text-green-300 mb-4 font-mono text-sm">{analysisResult.synthesized_analysis.body}</p>
+                <div className="flex flex-wrap gap-4 text-sm font-mono text-green-300">
+                  <span><strong className="text-green-400">Repository:</strong> {analysisResult.repository}</span>
+                  <span><strong className="text-green-400">Method:</strong> {analysisResult.analysis_method}</span>
+                  <span><strong className="text-green-400">Agents Used:</strong> {analysisResult.agents_used}/{analysisResult.agents_discovered}</span>
+                </div>
+              </div>
+
+              {/* Suggested Issue Card */}
+              <div className="bg-black/80 border border-green-400 p-6 backdrop-blur-sm hover:border-green-300 transition-all">
+                {/* Issue Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex flex-wrap gap-2">
+                    <div className={`${analysisResult.synthesized_analysis.difficulty === 'Easy' ? 'bg-green-600' :
+                      analysisResult.synthesized_analysis.difficulty === 'Medium' ? 'bg-yellow-600' :
+                        'bg-red-600'
+                      } border border-green-400 px-2 py-1`}>
+                      <span className="text-sm font-mono text-black">{analysisResult.synthesized_analysis.difficulty}</span>
+                    </div>
+                    <div className={`${analysisResult.synthesized_analysis.priority === 'Low' ? 'bg-green-600' :
+                      analysisResult.synthesized_analysis.priority === 'Medium' ? 'bg-yellow-600' :
+                        'bg-red-600'
+                      } border border-green-400 px-2 py-1`}>
+                      <span className="text-sm font-mono text-black">{analysisResult.synthesized_analysis.priority}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Issue Title */}
+                <h3 className="text-xl font-upheaval text-green-400 mb-4">
+                  {analysisResult.github_payload.title}
+                </h3>
+
+                {/* Issue Description */}
+                <div className="text-green-300 mb-4 font-mono text-sm">
+                  <p>{analysisResult.synthesized_analysis.body}</p>
+                </div>
+
+                {/* Technical Requirements */}
+                {analysisResult.synthesized_analysis.technical_requirements.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-lg font-upheaval text-green-400 mb-2">TECHNICAL REQUIREMENTS:</h4>
+                    <ul className="list-disc list-inside text-sm text-green-300 space-y-1 font-mono">
+                      {analysisResult.synthesized_analysis.technical_requirements.map((req, index) => (
+                        <li key={index}>{req}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Acceptance Criteria */}
+                {analysisResult.synthesized_analysis.acceptance_criteria.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-upheaval text-green-400 mb-2">ACCEPTANCE CRITERIA:</h4>
+                    <ul className="list-disc list-inside text-sm text-green-300 space-y-1 font-mono">
+                      {analysisResult.synthesized_analysis.acceptance_criteria.map((criteria, index) => (
+                        <li key={index}>{criteria}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Issue Details */}
+                <div className="flex flex-wrap gap-4 mb-6 text-sm font-mono text-green-300">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-green-400" />
+                    <span>{analysisResult.synthesized_analysis.implementation_estimate}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-green-400" />
+                    <span>{analysisResult.synthesized_analysis.labels.join(', ')}</span>
+                  </div>
+                </div>
+
+                {/* Approve Button */}
+                <Button
+                  onClick={approveAndCreateIssue}
+                  disabled={approvingIssue}
+                  className="w-full bg-green-600 text-black px-6 py-3 border border-green-400 font-upheaval hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {approvingIssue ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      CREATING ISSUE...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      APPROVE & CREATE GITHUB ISSUE
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Issues Grid */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-green-400" />
+              <span className="ml-2 font-mono text-green-300">Loading issues...</span>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {githubIssues.map((issue) => {
+                const difficulty = getDifficultyFromLabels(issue.labels);
+                const config = DIFFICULTY_CONFIG[difficulty];
+                const bountyInfo = issueBounties.get(issue.html_url);
+
+                return (
+                  <div
+                    key={issue.id}
+                    className="bg-black/80 border border-green-400 p-6 backdrop-blur-sm hover:border-green-300 transition-all"
+                  >
+                    {/* Issue Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <GitBranch className="w-5 h-5 text-green-400" />
+                        <span className="font-mono text-green-400">#{issue.number}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="bg-green-600 border border-green-400 px-2 py-1">
+                          <span className="text-sm font-mono text-black">{bountyInfo?.difficulty || config.label}</span>
+                        </div>
+                        {bountyInfo && (
+                          <div className="bg-yellow-500 border border-yellow-400 px-2 py-1">
+                            <span className="text-sm font-mono text-black">BOUNTY</span>
+                          </div>
+                        )}
+                        {issue.state === 'open' && (
+                          <div className="bg-green-500 border border-green-400 px-2 py-1">
+                            <span className="text-sm font-mono text-black">OPEN</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Issue Title */}
+                    <h3 className="text-lg font-upheaval text-green-400 mb-3 line-clamp-2">
+                      {issue.title}
+                    </h3>
+
+                    {/* Issue Description */}
+                    <p className="text-sm font-mono text-green-300 mb-4 line-clamp-3">
+                      {issue.body || "No description provided"}
+                    </p>
+
+                    {/* Labels */}
+                    {issue.labels.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {issue.labels.slice(0, 3).map((label) => (
+                          <div
+                            key={label.name}
+                            className="bg-black border border-green-400 px-2 py-1"
+                            style={{ backgroundColor: `#${label.color}20`, borderColor: `#${label.color}` }}
+                          >
+                            <span className="text-xs font-mono text-green-300">{label.name}</span>
+                          </div>
+                        ))}
+                        {issue.labels.length > 3 && (
+                          <div className="bg-black border border-green-400 px-2 py-1">
+                            <span className="text-xs font-mono text-green-300">+{issue.labels.length - 3} more</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Issue Meta */}
+                    <div className="flex items-center justify-between text-green-300 mb-4">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-green-400" />
+                        <span className="text-sm font-mono">{issue.user.login}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-green-400" />
+                        <span className="text-sm font-mono">{formatDate(issue.created_at)}</span>
+                      </div>
+                    </div>
+
+                    {/* Bounty Info */}
+                    <div className={`${bountyInfo ? 'bg-yellow-400/10 border-yellow-400' : 'bg-green-400/10 border-green-400'} border p-3 mb-4`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className={`w-4 h-4 ${bountyInfo ? 'text-yellow-400' : 'text-green-400'}`} />
+                          <span className={`text-sm font-mono ${bountyInfo ? 'text-yellow-400' : 'text-green-400'} font-bold`}>
+                            STAKED AMOUNT BY MAINTAINER
+                          </span>
+                        </div>
+                        <span className={`text-sm font-mono ${bountyInfo ? 'text-yellow-400' : 'text-green-400'} font-bold`}>
+                          {bountyInfo ? `${bountyInfo.amount} ETH` : '0.0 ETH'}
+                        </span>
+                      </div>
+                      <p className={`text-xs font-mono ${bountyInfo ? 'text-yellow-300' : 'text-green-300'} mt-1`}>
+                        {bountyInfo ? `Active bounty available - ${bountyInfo.difficulty} difficulty` : 'No active bounty - Click "Add Bounty" to stake ETH'}
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        className="flex-1 bg-black text-green-400 px-4 py-2 border border-green-400 font-mono text-sm hover:bg-green-400 hover:text-black transition-all"
+                        onClick={() => window.open(issue.html_url, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-1" />
+                        VIEW ON GITHUB
+                      </Button>
+                      <Button
+                        className={`px-4 py-2 border font-mono text-sm transition-all ${bountyInfo
+                          ? 'bg-gray-600 text-gray-400 border-gray-400 cursor-not-allowed'
+                          : 'bg-green-600 text-black border-green-400 hover:bg-green-400'
+                          }`}
+                        disabled={!!bountyInfo}
+                        onClick={() => {
+                          if (!bountyInfo) {
+                            setFormData(prev => ({
+                              ...prev,
+                              githubUrl: issue.html_url,
+                              title: issue.title,
+                              description: issue.body || ""
+                            }));
+                            setShowCreateForm(true);
+                          }
+                        }}
+                      >
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        {bountyInfo ? 'BOUNTY EXISTS' : 'ADD BOUNTY'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && githubIssues.length === 0 && (
+            <div className="text-center py-20">
+              <GitBranch className="w-16 h-16 mx-auto mb-6 text-green-400 opacity-50" />
+              <h3 className="text-3xl font-upheaval text-green-400 mb-4">NO ISSUES FOUND</h3>
+              <p className="font-mono text-green-300 mb-6">
+                {selectedRepo ? "This repository has no open issues." : "Select a repository to view issues."}
+              </p>
+              <Button
+                onClick={() => setShowCreateForm(true)}
+                className="bg-green-600 text-black px-6 py-3 border border-green-400 font-upheaval hover:bg-green-400 transition-all"
+              >
+                CREATE YOUR FIRST ISSUE
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Account Verification Section */}
-        {!isVerified && (
-          <div className="bg-yellow-500/20 border-2 border-yellow-400 p-6 mb-8 backdrop-blur-sm">
-            <div className="flex items-start gap-4">
-              <AlertCircle className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <h3 className="text-yellow-400 font-bold text-lg mb-2 font-upheaval uppercase">Account Verification Required</h3>
-                <p className="text-yellow-100 mb-4">
-                  You need to verify your account before creating bounties. This helps prevent spam and ensures platform security.
-                </p>
+        {/* Create Bounty Modal */}
+        {showCreateForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
+            <div className="bg-black border border-green-400 max-w-2xl w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm">
+              {/* Modal Header */}
+              <div className="bg-green-400/20 border-b border-green-400 p-6 flex justify-between items-center">
+                <h2 className="text-2xl font-upheaval text-green-400 italic">CREATE BOUNTY FOR ISSUE</h2>
                 <Button
-                  onClick={handleVerification}
-                  disabled={isVerifying || isContractLoading || isTransactionLoading}
-                  className="bg-yellow-400 text-black px-6 py-2 border-2 border-yellow-400 font-bold font-upheaval uppercase tracking-wider hover:bg-yellow-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setShowCreateForm(false)}
+                  className="bg-black text-green-400 p-2 border border-green-400 hover:bg-green-400 hover:text-black transition-all"
                 >
-                  {(isVerifying || isContractLoading || isTransactionLoading) ? (
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Issue Title */}
+                <div>
+                  <label className="text-sm font-mono text-green-400 mb-2 block">ISSUE TITLE *</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-4 py-3 border border-green-400 bg-black text-green-300 font-mono focus:border-green-300 focus:outline-none"
+                    placeholder="Brief description of the issue"
+                  />
+                </div>
+
+                {/* Issue Description */}
+                <div>
+                  <label className="text-sm font-mono text-green-400 mb-2 block">DESCRIPTION *</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-green-400 bg-black text-green-300 font-mono resize-none focus:border-green-300 focus:outline-none"
+                    placeholder="Detailed description of the issue, requirements, and acceptance criteria"
+                  />
+                </div>
+
+                {/* Difficulty Selection */}
+                <div>
+                  <label className="text-sm font-mono text-green-400 mb-2 block">DIFFICULTY LEVEL</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {Object.entries(DIFFICULTY_CONFIG).map(([key, config]) => (
+                      <button
+                        key={key}
+                        onClick={() => setFormData(prev => ({ ...prev, difficulty: Number(key) as Difficulty }))}
+                        className={`bg-black border ${formData.difficulty === Number(key) ? 'border-green-300' : 'border-green-400'
+                          } p-4 text-left transition-all hover:border-green-300`}
+                      >
+                        <div className="text-lg font-upheaval text-green-400 mb-1">{config.label}</div>
+                        <div className="text-sm font-mono text-green-300 mb-2">{config.description}</div>
+                        <div className="flex items-center gap-1 text-green-300">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm font-mono">{config.duration} days</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bounty Amount */}
+                <div>
+                  <label className="text-sm font-mono text-green-400 mb-2 block">BOUNTY AMOUNT (ETH) *</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.001"
+                      min="0.01"
+                      value={formData.bountyAmount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bountyAmount: e.target.value }))}
+                      className="w-full px-4 py-3 border border-green-400 bg-black text-green-300 font-mono pr-16 focus:border-green-300 focus:outline-none"
+                      placeholder="0.100"
+                    />
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <span className="text-sm font-mono text-green-400">ETH</span>
+                    </div>
+                  </div>
+                  <p className="text-sm font-mono text-green-300 mt-1">
+                    Minimum: 0.001 ETH
+                  </p>
+                </div>
+
+                {/* Completion Percentage */}
+                <div>
+                  <label className="text-sm font-mono text-green-400 mb-2 block">MINIMUM COMPLETION FOR STAKE RETURN (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.minimumCompletionPercentage}
+                    onChange={(e) => setFormData(prev => ({ ...prev, minimumCompletionPercentage: Number(e.target.value) }))}
+                    className="w-full px-4 py-3 border border-green-400 bg-black text-green-300 font-mono focus:border-green-300 focus:outline-none"
+                    placeholder="80"
+                  />
+                  <p className="text-sm font-mono text-green-300 mt-1">
+                    Contributors need to complete at least this percentage to avoid stake forfeiture
+                  </p>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-green-400/10 border-t border-green-400 p-6 flex gap-4">
+                <Button
+                  onClick={() => setShowCreateForm(false)}
+                  className="flex-1 bg-black text-green-400 px-6 py-3 border border-green-400 font-mono hover:bg-green-400 hover:text-black transition-all"
+                >
+                  CANCEL
+                </Button>
+                <Button
+                  onClick={handleCreateBounty}
+                  disabled={!formData.title || !formData.description || isContractLoading || isTransactionLoading || pendingGitHubIssue !== null}
+                  className="flex-1 bg-green-600 text-black px-6 py-3 border border-green-400 font-mono hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isContractLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      {formData.githubUrl ? 'CREATING BOUNTY...' : 'CREATING ISSUE & BOUNTY...'}
+                    </>
+                  ) : isTransactionLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      CONFIRMING BLOCKCHAIN TRANSACTION...
+                    </>
                   ) : (
-                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    <>
+                      <Zap className="w-5 h-5 mr-2" />
+                      CREATE BOUNTY ({formData.bountyAmount} ETH)
+                    </>
                   )}
-                  {(isVerifying || isContractLoading || isTransactionLoading) ? 'VERIFYING...' : 'VERIFY ACCOUNT'}
                 </Button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Account Verified Success */}
-        {isVerified && (
-          <div className="bg-green-500/20 border-2 border-green-400 p-4 mb-8 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
-              <span className="text-green-400 font-bold font-upheaval uppercase">Account Verified ✓</span>
-            </div>
-          </div>
-        )}
+        {/* CAPTCHA Modal */}
+        {showCaptchaModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-black border-2 border-green-400 rounded-lg p-8 max-w-md w-full mx-4 relative animate-in fade-in zoom-in duration-200">
+              {/* Close button */}
+              <button
+                onClick={() => setShowCaptchaModal(false)}
+                className="absolute top-4 right-4 text-green-400 hover:text-green-300 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
 
-        {/* Token Scope Warning */}
-        {hasRepoScope === false && (
-          <div className="bg-red-500/20 border-2 border-red-400 p-6 mb-8 backdrop-blur-sm">
-            <div className="flex items-start gap-4">
-              <AlertCircle className="w-6 h-6 text-red-400 mt-1 flex-shrink-0" />
-              <div>
-                <h3 className="text-xl font-bold text-red-400 mb-2 font-upheaval uppercase">⚠️ GITHUB PERMISSIONS REQUIRED</h3>
-                <p className="text-red-100 mb-4">
-                  Your GitHub token doesn&apos;t have the required permissions to create issues.
-                  The app needs &quot;repo&quot; scope to create issues and manage labels.
-                </p>
-                <div className="bg-black/40 border-2 border-red-400/50 p-4 mb-4 backdrop-blur-sm">
-                  <p className="text-red-100 mb-2 font-upheaval"><strong>CURRENT SCOPES:</strong> read:user, user:email</p>
-                  <p className="text-red-100 font-upheaval"><strong>REQUIRED SCOPES:</strong> read:user, user:email, repo</p>
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="inline-block p-3 bg-green-400/10 rounded-full mb-4">
+                  <AlertCircle className="w-8 h-8 text-green-400" />
                 </div>
-                <p className="text-red-100 font-upheaval">
-                  <strong>TO FIX THIS:</strong> Sign out from GitHub in the navbar above, then sign back in.
-                  The app will request the updated permissions automatically.
+                <h3 className="text-2xl font-upheaval text-green-400 mb-2">
+                  SECURITY VERIFICATION
+                </h3>
+                <p className="text-gray-400 font-mono text-sm">
+                  Complete the verification to analyze your repository
                 </p>
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* AI Suggestion Section */}
-        {showSuggestion && analysisResult && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-upheaval text-green-400 italic">AI SUGGESTED ISSUE</h2>
-              <Button
-                onClick={() => setShowSuggestion(false)}
-                className="bg-black text-green-400 px-4 py-2 border border-green-400 font-mono hover:bg-green-400 hover:text-black transition-all"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {/* Analysis Summary */}
-            <div className="bg-black/80 border border-green-400 p-6 mb-6 backdrop-blur-sm">
-              <h3 className="text-xl font-upheaval text-green-400 mb-2">AI ANALYSIS REPORT</h3>
-              <p className="text-green-300 mb-4 font-mono text-sm">{analysisResult.synthesized_analysis.body}</p>
-              <div className="flex flex-wrap gap-4 text-sm font-mono text-green-300">
-                <span><strong className="text-green-400">Repository:</strong> {analysisResult.repository}</span>
-                <span><strong className="text-green-400">Method:</strong> {analysisResult.analysis_method}</span>
-                <span><strong className="text-green-400">Agents Used:</strong> {analysisResult.agents_used}/{analysisResult.agents_discovered}</span>
-              </div>
-            </div>
-
-            {/* Suggested Issue Card */}
-            <div className="bg-black/80 border border-green-400 p-6 backdrop-blur-sm hover:border-green-300 transition-all">
-              {/* Issue Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex flex-wrap gap-2">
-                  <div className={`${analysisResult.synthesized_analysis.difficulty === 'Easy' ? 'bg-green-600' :
-                    analysisResult.synthesized_analysis.difficulty === 'Medium' ? 'bg-yellow-600' :
-                      'bg-red-600'
-                    } border border-green-400 px-2 py-1`}>
-                    <span className="text-sm font-mono text-black">{analysisResult.synthesized_analysis.difficulty}</span>
+              {/* CAPTCHA Widget */}
+              <div className="flex justify-center mb-6">
+                {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? (
+                  <div
+                    ref={captchaContainerRef}
+                    className="min-h-[65px] flex items-center justify-center"
+                  >
+                    {!captchaLoaded && (
+                      <div className="text-green-400 font-mono text-sm">
+                        Loading verification...
+                      </div>
+                    )}
                   </div>
-                  <div className={`${analysisResult.synthesized_analysis.priority === 'Low' ? 'bg-green-600' :
-                    analysisResult.synthesized_analysis.priority === 'Medium' ? 'bg-yellow-600' :
-                      'bg-red-600'
-                    } border border-green-400 px-2 py-1`}>
-                    <span className="text-sm font-mono text-black">{analysisResult.synthesized_analysis.priority}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Issue Title */}
-              <h3 className="text-xl font-upheaval text-green-400 mb-4">
-                {analysisResult.github_payload.title}
-              </h3>
-
-              {/* Issue Description */}
-              <div className="text-green-300 mb-4 font-mono text-sm">
-                <p>{analysisResult.synthesized_analysis.body}</p>
-              </div>
-
-              {/* Technical Requirements */}
-              {analysisResult.synthesized_analysis.technical_requirements.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="text-lg font-upheaval text-green-400 mb-2">TECHNICAL REQUIREMENTS:</h4>
-                  <ul className="list-disc list-inside text-sm text-green-300 space-y-1 font-mono">
-                    {analysisResult.synthesized_analysis.technical_requirements.map((req, index) => (
-                      <li key={index}>{req}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Acceptance Criteria */}
-              {analysisResult.synthesized_analysis.acceptance_criteria.length > 0 && (
-                <div className="mb-6">
-                  <h4 className="text-lg font-upheaval text-green-400 mb-2">ACCEPTANCE CRITERIA:</h4>
-                  <ul className="list-disc list-inside text-sm text-green-300 space-y-1 font-mono">
-                    {analysisResult.synthesized_analysis.acceptance_criteria.map((criteria, index) => (
-                      <li key={index}>{criteria}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* Issue Details */}
-              <div className="flex flex-wrap gap-4 mb-6 text-sm font-mono text-green-300">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-green-400" />
-                  <span>{analysisResult.synthesized_analysis.implementation_estimate}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-green-400" />
-                  <span>{analysisResult.synthesized_analysis.labels.join(', ')}</span>
-                </div>
-              </div>
-
-              {/* Approve Button */}
-              <Button
-                onClick={approveAndCreateIssue}
-                disabled={approvingIssue}
-                className="w-full bg-green-600 text-black px-6 py-3 border border-green-400 font-upheaval hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {approvingIssue ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    CREATING ISSUE...
-                  </>
                 ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    APPROVE & CREATE GITHUB ISSUE
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Issues Grid */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-green-400" />
-            <span className="ml-2 font-mono text-green-300">Loading issues...</span>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {githubIssues.map((issue) => {
-              const difficulty = getDifficultyFromLabels(issue.labels);
-              const config = DIFFICULTY_CONFIG[difficulty];
-              const bountyInfo = issueBounties.get(issue.html_url);
-
-              return (
-                <div
-                  key={issue.id}
-                  className="bg-black/80 border border-green-400 p-6 backdrop-blur-sm hover:border-green-300 transition-all"
-                >
-                  {/* Issue Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <GitBranch className="w-5 h-5 text-green-400" />
-                      <span className="font-mono text-green-400">#{issue.number}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="bg-green-600 border border-green-400 px-2 py-1">
-                        <span className="text-sm font-mono text-black">{bountyInfo?.difficulty || config.label}</span>
-                      </div>
-                      {bountyInfo && (
-                        <div className="bg-yellow-500 border border-yellow-400 px-2 py-1">
-                          <span className="text-sm font-mono text-black">BOUNTY</span>
-                        </div>
-                      )}
-                      {issue.state === 'open' && (
-                        <div className="bg-green-500 border border-green-400 px-2 py-1">
-                          <span className="text-sm font-mono text-black">OPEN</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Issue Title */}
-                  <h3 className="text-lg font-upheaval text-green-400 mb-3 line-clamp-2">
-                    {issue.title}
-                  </h3>
-
-                  {/* Issue Description */}
-                  <p className="text-sm font-mono text-green-300 mb-4 line-clamp-3">
-                    {issue.body || "No description provided"}
-                  </p>
-
-                  {/* Labels */}
-                  {issue.labels.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {issue.labels.slice(0, 3).map((label) => (
-                        <div
-                          key={label.name}
-                          className="bg-black border border-green-400 px-2 py-1"
-                          style={{ backgroundColor: `#${label.color}20`, borderColor: `#${label.color}` }}
-                        >
-                          <span className="text-xs font-mono text-green-300">{label.name}</span>
-                        </div>
-                      ))}
-                      {issue.labels.length > 3 && (
-                        <div className="bg-black border border-green-400 px-2 py-1">
-                          <span className="text-xs font-mono text-green-300">+{issue.labels.length - 3} more</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Issue Meta */}
-                  <div className="flex items-center justify-between text-green-300 mb-4">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-green-400" />
-                      <span className="text-sm font-mono">{issue.user.login}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-green-400" />
-                      <span className="text-sm font-mono">{formatDate(issue.created_at)}</span>
-                    </div>
-                  </div>
-
-                  {/* Bounty Info */}
-                  <div className={`${bountyInfo ? 'bg-yellow-400/10 border-yellow-400' : 'bg-green-400/10 border-green-400'} border p-3 mb-4`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className={`w-4 h-4 ${bountyInfo ? 'text-yellow-400' : 'text-green-400'}`} />
-                        <span className={`text-sm font-mono ${bountyInfo ? 'text-yellow-400' : 'text-green-400'} font-bold`}>
-                          STAKED AMOUNT BY MAINTAINER
-                        </span>
-                      </div>
-                      <span className={`text-sm font-mono ${bountyInfo ? 'text-yellow-400' : 'text-green-400'} font-bold`}>
-                        {bountyInfo ? `${bountyInfo.amount} ETH` : '0.0 ETH'}
-                      </span>
-                    </div>
-                    <p className={`text-xs font-mono ${bountyInfo ? 'text-yellow-300' : 'text-green-300'} mt-1`}>
-                      {bountyInfo ? `Active bounty available - ${bountyInfo.difficulty} difficulty` : 'No active bounty - Click "Add Bounty" to stake ETH'}
+                  <div className="text-center p-6 border-2 border-red-400 bg-red-400/10 rounded">
+                    <p className="text-red-400 font-mono text-lg font-bold mb-3">
+                      ❌ CAPTCHA NOT CONFIGURED
                     </p>
+                    <p className="text-gray-400 font-mono text-sm mb-4">
+                      Environment variable NEXT_PUBLIC_TURNSTILE_SITE_KEY is not set.
+                    </p>
+                    <div className="text-left text-gray-500 font-mono text-xs space-y-2 bg-black/50 p-3 rounded">
+                      <p><strong>Steps to fix:</strong></p>
+                      <p>1. Go to Vercel Dashboard → Settings → Environment Variables</p>
+                      <p>2. Add: NEXT_PUBLIC_TURNSTILE_SITE_KEY</p>
+                      <p>3. Value: Your Cloudflare Turnstile site key</p>
+                      <p>4. Select all environments</p>
+                      <p>5. Redeploy the application</p>
+                    </div>
                   </div>
+                )}
+              </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button
-                      className="flex-1 bg-black text-green-400 px-4 py-2 border border-green-400 font-mono text-sm hover:bg-green-400 hover:text-black transition-all"
-                      onClick={() => window.open(issue.html_url, '_blank')}
-                    >
-                      <ExternalLink className="w-4 h-4 mr-1" />
-                      VIEW ON GITHUB
-                    </Button>
-                    <Button
-                      className={`px-4 py-2 border font-mono text-sm transition-all ${bountyInfo
-                        ? 'bg-gray-600 text-gray-400 border-gray-400 cursor-not-allowed'
-                        : 'bg-green-600 text-black border-green-400 hover:bg-green-400'
-                        }`}
-                      disabled={!!bountyInfo}
-                      onClick={() => {
-                        if (!bountyInfo) {
-                          setFormData(prev => ({
-                            ...prev,
-                            githubUrl: issue.html_url,
-                            title: issue.title,
-                            description: issue.body || ""
-                          }));
-                          setShowCreateForm(true);
-                        }
-                      }}
-                    >
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      {bountyInfo ? 'BOUNTY EXISTS' : 'ADD BOUNTY'}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && githubIssues.length === 0 && (
-          <div className="text-center py-20">
-            <GitBranch className="w-16 h-16 mx-auto mb-6 text-green-400 opacity-50" />
-            <h3 className="text-3xl font-upheaval text-green-400 mb-4">NO ISSUES FOUND</h3>
-            <p className="font-mono text-green-300 mb-6">
-              {selectedRepo ? "This repository has no open issues." : "Select a repository to view issues."}
-            </p>
-            <Button
-              onClick={() => setShowCreateForm(true)}
-              className="bg-green-600 text-black px-6 py-3 border border-green-400 font-upheaval hover:bg-green-400 transition-all"
-            >
-              CREATE YOUR FIRST ISSUE
-            </Button>
+              {/* Info */}
+              <div className="text-center text-gray-500 font-mono text-xs">
+                <p>🛡️ This protects our service from automated bots</p>
+                <p className="mt-1">Analysis will start automatically after verification</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Create Bounty Modal */}
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-50">
-          <div className="bg-black border border-green-400 max-w-2xl w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm">
-            {/* Modal Header */}
-            <div className="bg-green-400/20 border-b border-green-400 p-6 flex justify-between items-center">
-              <h2 className="text-2xl font-upheaval text-green-400 italic">CREATE BOUNTY FOR ISSUE</h2>
-              <Button
-                onClick={() => setShowCreateForm(false)}
-                className="bg-black text-green-400 p-2 border border-green-400 hover:bg-green-400 hover:text-black transition-all"
-              >
-                <X className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Issue Title */}
-              <div>
-                <label className="text-sm font-mono text-green-400 mb-2 block">ISSUE TITLE *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-4 py-3 border border-green-400 bg-black text-green-300 font-mono focus:border-green-300 focus:outline-none"
-                  placeholder="Brief description of the issue"
-                />
-              </div>
-
-              {/* Issue Description */}
-              <div>
-                <label className="text-sm font-mono text-green-400 mb-2 block">DESCRIPTION *</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  rows={4}
-                  className="w-full px-4 py-3 border border-green-400 bg-black text-green-300 font-mono resize-none focus:border-green-300 focus:outline-none"
-                  placeholder="Detailed description of the issue, requirements, and acceptance criteria"
-                />
-              </div>
-
-              {/* Difficulty Selection */}
-              <div>
-                <label className="text-sm font-mono text-green-400 mb-2 block">DIFFICULTY LEVEL</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {Object.entries(DIFFICULTY_CONFIG).map(([key, config]) => (
-                    <button
-                      key={key}
-                      onClick={() => setFormData(prev => ({ ...prev, difficulty: Number(key) as Difficulty }))}
-                      className={`bg-black border ${formData.difficulty === Number(key) ? 'border-green-300' : 'border-green-400'
-                        } p-4 text-left transition-all hover:border-green-300`}
-                    >
-                      <div className="text-lg font-upheaval text-green-400 mb-1">{config.label}</div>
-                      <div className="text-sm font-mono text-green-300 mb-2">{config.description}</div>
-                      <div className="flex items-center gap-1 text-green-300">
-                        <Clock className="w-4 h-4" />
-                        <span className="text-sm font-mono">{config.duration} days</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bounty Amount */}
-              <div>
-                <label className="text-sm font-mono text-green-400 mb-2 block">BOUNTY AMOUNT (ETH) *</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.001"
-                    min="0.01"
-                    value={formData.bountyAmount}
-                    onChange={(e) => setFormData(prev => ({ ...prev, bountyAmount: e.target.value }))}
-                    className="w-full px-4 py-3 border border-green-400 bg-black text-green-300 font-mono pr-16 focus:border-green-300 focus:outline-none"
-                    placeholder="0.100"
-                  />
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                    <span className="text-sm font-mono text-green-400">ETH</span>
-                  </div>
-                </div>
-                <p className="text-sm font-mono text-green-300 mt-1">
-                  Minimum: 0.001 ETH
-                </p>
-              </div>
-
-              {/* Completion Percentage */}
-              <div>
-                <label className="text-sm font-mono text-green-400 mb-2 block">MINIMUM COMPLETION FOR STAKE RETURN (%)</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.minimumCompletionPercentage}
-                  onChange={(e) => setFormData(prev => ({ ...prev, minimumCompletionPercentage: Number(e.target.value) }))}
-                  className="w-full px-4 py-3 border border-green-400 bg-black text-green-300 font-mono focus:border-green-300 focus:outline-none"
-                  placeholder="80"
-                />
-                <p className="text-sm font-mono text-green-300 mt-1">
-                  Contributors need to complete at least this percentage to avoid stake forfeiture
-                </p>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="bg-green-400/10 border-t border-green-400 p-6 flex gap-4">
-              <Button
-                onClick={() => setShowCreateForm(false)}
-                className="flex-1 bg-black text-green-400 px-6 py-3 border border-green-400 font-mono hover:bg-green-400 hover:text-black transition-all"
-              >
-                CANCEL
-              </Button>
-              <Button
-                onClick={handleCreateBounty}
-                disabled={!formData.title || !formData.description || isContractLoading || isTransactionLoading || pendingGitHubIssue !== null}
-                className="flex-1 bg-green-600 text-black px-6 py-3 border border-green-400 font-mono hover:bg-green-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isContractLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    {formData.githubUrl ? 'CREATING BOUNTY...' : 'CREATING ISSUE & BOUNTY...'}
-                  </>
-                ) : isTransactionLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    CONFIRMING BLOCKCHAIN TRANSACTION...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-5 h-5 mr-2" />
-                    CREATE BOUNTY ({formData.bountyAmount} ETH)
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
